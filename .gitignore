@@ -1,0 +1,13 @@
+rabbitmq
+gateway
+**.env**
+venv
+db.**
+**__pycache__**
+*.pyc
+migrations
+.venv
+postgres
+mysql
+node_modules
+.vscode
