@@ -6,7 +6,7 @@ db.**
 **__pycache__**
 *.pyc
 migrations
-.venv
+**.venv**
 postgres
 mysql
 node_modules
