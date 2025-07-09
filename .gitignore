@@ -11,3 +11,4 @@ postgres
 mysql
 node_modules
 .vscode
+.idea
