@@ -1,0 +1,101 @@
+networks:
+  jobsite:
+    external: false
+
+volumes:
+  jobsite_db:
+  jobsite_rabbitmq:
+
+x-backend-service: &backend-service
+  image: jobsite-backend
+  env_file:
+    - .env
+  networks:
+    - jobsite
+  build:
+    context: ./backend
+    dockerfile: Dockerfile
+  volumes:
+    - ./backend:/app
+    - /app/.venv/
+
+services:
+  jobsite-db:
+    image: postgres:17.3-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    networks:
+      - jobsite
+    volumes:
+      - jobsite_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  jobsite-rabbitmq:
+    image: rabbitmq:4.0.7-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RBMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RBMQ_PASSWORD}
+    ports:
+      - "15672:15672"
+      # - "{RBMQ_PORT}:${RBMQ_PORT}"
+    networks:
+      - jobsite
+    volumes:
+      - jobsite_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+  jobsite-backend:
+    <<: *backend-service
+    command: ["python", "manage.py", "runserver", "0.0.0.0:${BACKEND_PORT}"]
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    depends_on:
+      jobsite-db:
+        condition: service_healthy
+      jobsite-rabbitmq:
+        condition: service_healthy
+
+  jobsite-migrations:
+    <<: *backend-service
+    command:
+      - sh
+      - -c
+      - |
+        python manage.py makemigrations
+        python manage.py migrate auth
+        python manage.py migrate --run-syncdb
+    depends_on:
+      jobsite-db:
+        condition: service_healthy
+
+  jobsite-worker:
+    <<: *backend-service
+    command:
+      [
+        "celery",
+        "-A",
+        "backend",
+        "worker",
+        "--beat",
+        "--scheduler",
+        "django",
+        "--loglevel=${CELERY_LOG_LEVEL:-info}",
+        "--autoscale=${CELERY_AUTOSCALE:-3,1}",
+      ]
+    depends_on:
+      jobsite-db:
+        condition: service_healthy
+      jobsite-rabbitmq:
+        condition: service_healthy
