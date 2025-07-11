@@ -13,10 +13,10 @@ x-backend-service: &backend-service
   networks:
     - jobsite
   build:
-    context: ./backend
+    context: .
     dockerfile: Dockerfile
   volumes:
-    - ./backend:/app
+    - ./:/app
     - /app/.venv/
 
 services:
