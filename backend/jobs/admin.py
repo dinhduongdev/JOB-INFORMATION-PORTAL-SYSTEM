@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import Expertise, JobPost
 
-# Register your models here.
+admin.site.register(JobPost)
+admin.site.register(Expertise)
