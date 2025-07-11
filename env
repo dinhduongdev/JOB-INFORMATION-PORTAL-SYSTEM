@@ -1,0 +1,29 @@
+RBMQ_PROTOCOL = "amqp"
+RBMQ_HOST = "jobsite-rabbitmq"
+RBMQ_PORT = "5672"
+RBMQ_USER = "rabbitmq"
+RBMQ_PASSWORD = "rabbitmq"
+
+CELERY_LOG_LEVEL = "info"
+CELERY_AUTOSCALE = "5,1"
+
+DB_ENGINE="django.db.backends.postgresql"
+DB_USER="djangoapp"
+DB_PASSWORD="tenanhlanui"
+DB_NAME="jobsite"
+DB_PORT="5432"
+DB_HOST="jobsite-db"
+
+SECRET_KEY="django-insecure-&3_ckzxb@5v3l-5=)hc509d!%**b0(iy_qbgkv1r^2^&t2@_5y"
+BACKEND_PORT="6789"
+DEBUG="True"
+
+ACCOUNT_ACTIVATION_TIMEOUT_SEC=86400
+ACTIVATION_TOKEN_SALT="jfsdowijfsonvlkdvnaoiefjO#*rua38uO#*Uowwgo"
+
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT=587
+EMAIL_HOST_USER = "huykhongcan04@gmail.com"
+EMAIL_HOST_PASSWORD = "kcrz mqfg smga ulpq"
+
+CLOUDFRONT_DOMAIN = "blob.anhnuive.id.vn"
