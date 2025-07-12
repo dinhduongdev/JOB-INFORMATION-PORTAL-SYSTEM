@@ -5,7 +5,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from itsdangerous import URLSafeTimedSerializer
 
-
 class MyUserManager(BaseUserManager):
     def create_user(self, email: str, password: str, **extra_fields):
         if not email:
