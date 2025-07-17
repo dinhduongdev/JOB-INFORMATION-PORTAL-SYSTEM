@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "jobs",
     "applications",
     "seed",
+    "config"
 ]
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
@@ -105,7 +106,7 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "user.User"
-ACCOUNT_ACTIVATION_TIMEOUT_SEC = getenv("ACCOUNT_ACTIVATION_TIMEOUT_SEC", 86400)
+ACCOUNT_ACTIVATION_TIMEOUT_SEC = int( getenv("ACCOUNT_ACTIVATION_TIMEOUT_SEC", 86400) )
 ACTIVATION_TOKEN_SALT = getenv(
     "ACTIVATION_TOKEN_SALT", "this is a salt for activation token"
 )

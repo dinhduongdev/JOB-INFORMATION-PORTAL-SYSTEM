@@ -45,7 +45,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RBMQ_PASSWORD}
     ports:
       - "15672:15672"
-      # - "{RBMQ_PORT}:${RBMQ_PORT}"
+      - "${RBMQ_PORT}:${RBMQ_PORT}"
     networks:
       - jobsite
     volumes:

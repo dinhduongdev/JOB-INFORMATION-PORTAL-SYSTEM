@@ -1,7 +1,8 @@
 rabbitmq
 gateway
 **.env**
-venv
+backend/.env
+backend/venv
 db.**
 **__pycache__**
 *.pyc
