@@ -26,29 +26,29 @@ const Header = () => {
 
         <ul className="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
           <li>
-            <a href="#" className="nav-link px-2 text-muted">
+            <a href="#" className="nav-link px-2 text-white">
               Việc Làm IT <VscTriangleDown size={12} />
             </a>
           </li>
           <li>
-            <a href="#" className="nav-link px-2 text-muted">
+            <a href="#" className="nav-link px-2 text-white">
               Top Công Ty IT <VscTriangleDown size={12} />
             </a>
           </li>
           <li>
-            <a href="#" className="nav-link px-2 text-muted">
+            <a href="#" className="nav-link px-2 text-white">
               Blog
             </a>
           </li>
           <li>
-            <a href="#" className="nav-link px-2 text-muted">
+            <a href="/cv" className="nav-link px-2 text-warning fw-bold">
               Mẫu CV IT <span className="badge bg-danger">HOT</span>
             </a>
           </li>
         </ul>
 
-        <div className="text-end">
-          <a href="#" className="btn btn-outline-secondary me-2">
+        <div className="text-end d-flex align-items-center">
+          <a href="#" className="btn btn-outline-light me-3">
             Nhà Tuyển Dụng
           </a>
 
@@ -65,21 +65,26 @@ const Header = () => {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="btn btn-outline-secondary me-2 text-decoration-none text-muted"
-            >
-              Đăng Nhập/Đăng Ký
-            </Link>
+            <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i className="bi bi-person-circle"></i> {/* Example using Bootstrap Icons */}
+                </button>
+                <ul className="dropdown-menu">
+                    <li><Link className="dropdown-item" to="/login">Đăng Nhập</Link></li>
+                    <li><Link className="dropdown-item" to="/register">Đăng Ký</Link></li>
+                </ul>
+            </div>
           )}
 
-          <a href="#" className="text-decoration-none text-muted">
-            EN
-          </a>
-          <span className="text-muted"> | </span>
-          <a href="#" className="text-decoration-none text-muted fw-bold">
-            VI
-          </a>
+          <div className="ms-3">
+            <a href="#" className="text-decoration-none text-muted">
+              EN
+            </a>
+            <span className="text-muted"> | </span>
+            <a href="#" className="text-decoration-none text-white fw-bold">
+              VI
+            </a>
+          </div>
         </div>
       </div>
     </header>
