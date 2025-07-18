@@ -1,8 +1,19 @@
 import { VscTriangleDown } from "react-icons/vsc";
 import logo from "../assets/logo.webp";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 
 const Header = () => {
+  const { token, user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
   return (
     <header className="py-2 bg-dark" data-bs-theme="dark">
       <div className="container d-flex flex-wrap justify-content-between align-items-center">
@@ -40,9 +51,28 @@ const Header = () => {
           <a href="#" className="btn btn-outline-secondary me-2">
             Nhà Tuyển Dụng
           </a>
-          <Link to="/dang-nhap" className="btn btn-outline-secondary me-2 text-decoration-none text-muted">
-            Đăng Nhập/Đăng Ký
-          </Link>
+
+          {token ? (
+            <>
+              <span className="me-2 text-white">
+                Xin chào, {user?.username || "Người dùng"}!
+              </span>
+              <button
+                className="btn btn-outline-danger me-2"
+                onClick={handleLogout}
+              >
+                Đăng Xuất
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="btn btn-outline-secondary me-2 text-decoration-none text-muted"
+            >
+              Đăng Nhập/Đăng Ký
+            </Link>
+          )}
+
           <a href="#" className="text-decoration-none text-muted">
             EN
           </a>

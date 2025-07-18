@@ -17,12 +17,12 @@ function App() {
         <Route path="/" element={<HomePage />} />
 
         {/* Các routes cho đăng nhập và đăng ký được gói trong layout riêng */}
-        <Route path="/dang-nhap" element={
+        <Route path="/login" element={
           <LayoutAuth>
             <LoginPage />
           </LayoutAuth>
         } />
-        <Route path="/dang-ky" element={
+        <Route path="/register" element={
           <LayoutAuth>
             <RegisterPage />
           </LayoutAuth>
