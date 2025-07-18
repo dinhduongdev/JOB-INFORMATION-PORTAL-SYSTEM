@@ -1,11 +1,9 @@
+from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from itsdangerous import URLSafeTimedSerializer
-
-from django.conf import settings
-
 
 class MyUserManager(BaseUserManager):
     def create_user(self, email: str, password: str, **extra_fields):
@@ -27,13 +25,16 @@ class MyUserManager(BaseUserManager):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError(_("Superuser must have is_superuser=True."))
 
-        user = self.create_user(email=email, password=password, **extra_fields)
+        user = self.create_user(
+            email=email, password=password, role=Role.ADMIN, **extra_fields
+        )
         return user
 
 
 class Role(models.TextChoices):
     EMPLOYER = "Employer"
     EMPLOYEE = "Employee"
+    ADMIN = "Admin"
 
 
 class User(AbstractUser):
@@ -58,7 +59,7 @@ class User(AbstractUser):
     @property
     def is_employer(self):
         return self.role == Role.EMPLOYER
-    
+
     @property
     def is_employee(self):
         return self.role == Role.EMPLOYEE
@@ -73,3 +74,59 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email}|{self.get_full_name()}"
+
+
+class ApplicantProfile(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="applicant_profile"
+    )
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    skills = models.ManyToManyField(
+        "Skill", blank=True, related_name="applicant_profiles"
+    )
+
+    def __str__(self):
+        return f"Profile of {self.user.email}"
+
+
+class Title(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class WorkExperience(models.Model):
+    applicant = models.ForeignKey(
+        ApplicantProfile, on_delete=models.CASCADE, related_name="work_experiences"
+    )
+    company_name = models.CharField(max_length=255)
+    title = models.ForeignKey(Title, on_delete=models.SET_NULL, blank=True, null=True, related_name="work_experiences")
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return (
+            f"{self.title} at {self.company_name} ({self.start_date} - {self.end_date})"
+        )
+
+
+class Skill(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class EmployerProfile(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="employer_profile"
+    )
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    company_name = models.CharField(max_length=255, blank=True, null=True)
+    company_description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile of {self.user.email} - {self.company_name}"

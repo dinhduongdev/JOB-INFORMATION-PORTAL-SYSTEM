@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from os import getenv
 from pathlib import Path
-from os import getenv, path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     "user",
     "jobs",
     "applications",
+    "seed",
+    "config"
 ]
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
@@ -104,8 +106,10 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "user.User"
-ACCOUNT_ACTIVATION_TIMEOUT_SEC=getenv("ACCOUNT_ACTIVATION_TIMEOUT_SEC", 86400)
-ACTIVATION_TOKEN_SALT=getenv("ACTIVATION_TOKEN_SALT", "this is a salt for activation token")
+ACCOUNT_ACTIVATION_TIMEOUT_SEC = int( getenv("ACCOUNT_ACTIVATION_TIMEOUT_SEC", 86400) )
+ACTIVATION_TOKEN_SALT = getenv(
+    "ACTIVATION_TOKEN_SALT", "this is a salt for activation token"
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -186,3 +190,4 @@ EMAIL_HOST_USER = getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD")
 
 CLOUDFRONT_DOMAIN = getenv("CLOUDFRONT_DOMAIN")
+
