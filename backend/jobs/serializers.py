@@ -1,6 +1,9 @@
+from django.utils import timezone
+
+from user.models import Title, Skill
+from user.serializers import TitleSerializer, SkillSerializer, EmployerProfileSerializer
 from .models import JobPost, Expertise, Salary
 from rest_framework import serializers
-# from user.serializers import TitleSerializer, SkillSerializer, EmployerSerializer
 
 
 class ExpertiseSerializer(serializers.ModelSerializer):
@@ -52,20 +55,89 @@ class SalarySerializer(serializers.ModelSerializer):
         return data
 
 
-class JobPostSerializer(serializers.ModelSerializer):
-    expertise = ExpertiseSerializer(required=False)
+class JobPostWriteSerializer(serializers.ModelSerializer):
+    expertise_id = serializers.PrimaryKeyRelatedField(
+        queryset=Expertise.objects.all(),
+        source='expertise',
+        required=False,
+        allow_null=True
+    )
+    title_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Title.objects.all(),
+        source='titles',
+        required=False
+    )
+    skill_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Skill.objects.all(),
+        source='skills',
+        required=False
+    )
     salary = SalarySerializer()
-    # title = TitleSerializer(many=True, required=False)
-    # skills = SkillSerializer(many=True, required=False)
-    # employerProfile = EmployerSerializer(read_only=True)
 
     class Meta:
         model = JobPost
         fields = [
             'id',
-            'employerProfile',
+            "name",
+            'expertise_id',
+            'title_ids',
+            'skill_ids',
+            'location',
+            'requirements',
+            'salary',
+            'description',
+            'due_date',
+            'is_active',
+        ]
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        salary_data = validated_data.pop('salary')
+        salary = Salary.objects.create(**salary_data)
+        validated_data['salary'] = salary
+
+        job_post = super().create(validated_data)
+        return job_post
+
+    def update(self, instance, validated_data):
+        if 'salary' in validated_data:
+            salary_data = validated_data.pop('salary')
+            if instance.salary:
+                for attr, value in salary_data.items():
+                    setattr(instance.salary, attr, value)
+                instance.salary.save()
+            else:
+                instance.salary = Salary.objects.create(**salary_data)
+
+        return super().update(instance, validated_data)
+
+    def validate(self, data):
+        if not data.get('description', '').strip():
+            raise serializers.ValidationError({"description": "Description cannot be empty."})
+
+        if data.get('due_date') and data['due_date'] < timezone.now():
+            raise serializers.ValidationError({"due_date": "Due date must be in the future."})
+
+        return data
+
+
+class JobPostReadSerializer(serializers.ModelSerializer):
+    expertise = ExpertiseSerializer()
+    titles = TitleSerializer(many=True)
+    skills = SkillSerializer(many=True)
+    employer = EmployerProfileSerializer()
+    salary = SalarySerializer()
+
+    class Meta:
+        model = JobPost
+        fields = [
+            'id',
+            "name",
+            'employer',
             'expertise',
-            'title',
+            'titles',
             'skills',
             'location',
             'requirements',
@@ -75,61 +147,4 @@ class JobPostSerializer(serializers.ModelSerializer):
             'due_date',
             'is_active',
         ]
-        read_only_fields = ['id', 'created_at', 'employerProfile']
-
-    def create(self, validated_data):
-        expertise_data = validated_data.pop('expertise', None)
-        salary_data = validated_data.pop('salary', None)
-
-        # Handle Salary
-        salary = None
-        if salary_data:
-            salary = Salary.objects.create(**salary_data)
-            validated_data['salary'] = salary
-
-        # Create JobPost
-        job_post = JobPost.objects.create(**validated_data)
-
-        # Handle Expertise
-        if expertise_data:
-            expertise, _ = Expertise.objects.get_or_create(**expertise_data)
-            job_post.expertise = expertise
-            job_post.save()
-
-        return job_post
-
-    def update(self, instance, validated_data):
-        expertise_data = validated_data.pop('expertise', None)
-        salary_data = validated_data.pop('salary', None)
-
-        # Update basic fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
-        # Handle Expertise update
-        if expertise_data:
-            expertise, _ = Expertise.objects.get_or_create(**expertise_data)
-            instance.expertise = expertise
-
-        # Handle Salary update
-        if salary_data:
-            if instance.salary:
-                for attr, value in salary_data.items():
-                    setattr(instance.salary, attr, value)
-                instance.salary.save()
-            else:
-                instance.salary = Salary.objects.create(**salary_data)
-
-        instance.save()
-        return instance
-
-    def validate_salary(self, value):
-        """Delegates validation to nested SalarySerializer"""
-        serializer = SalarySerializer(data=value)
-        serializer.is_valid(raise_exception=True)
-        return value
-
-    def validate_location(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Location must not be empty.")
-        return value.strip()
+        read_only_fields = fields

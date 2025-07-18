@@ -44,7 +44,7 @@ class UserAdmin(BaseUserAdmin):
         "is_staff",
         "is_superuser",
         "is_employer",
-        "is_employee",
+        "is_applicant",
         "is_active",
     )
     list_filter = ("is_staff", "is_superuser", "is_active", "groups")

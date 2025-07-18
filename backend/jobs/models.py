@@ -27,7 +27,7 @@ class Salary(models.Model):
 
 
 class JobPost(models.Model):
-    employerProfile = models.ForeignKey(
+    employer = models.ForeignKey(
         EmployerProfile, on_delete=models.CASCADE, related_name="job_posts"
     )
     name = models.CharField(max_length=255, null=False)
@@ -38,7 +38,7 @@ class JobPost(models.Model):
         null=True,
         related_name="job_posts",
     )
-    title = models.ManyToManyField(Title, blank=True, related_name="job_posts")
+    titles = models.ManyToManyField(Title, blank=True, related_name="job_posts")
     skills = models.ManyToManyField(Skill, blank=True, related_name='job_posts')
     location = models.CharField(max_length=255)
     requirements = models.TextField()

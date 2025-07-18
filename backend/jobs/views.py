@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
 from rest_framework.filters import SearchFilter
@@ -7,7 +8,7 @@ from rest_framework.permissions import AllowAny
 from jobs.filters import JobPostFilter
 from utils.response import api_response
 from jobs.models import Expertise, JobPost
-from jobs.serializers import ExpertiseSerializer, JobPostSerializer
+from jobs.serializers import ExpertiseSerializer, JobPostReadSerializer, JobPostWriteSerializer
 from jobs.permissions import IsAdmin, IsEmployerOwner
 
 
@@ -30,25 +31,38 @@ class ExpertiseViewSet(viewsets.ModelViewSet):
 
 
 class JobPostViewSet(viewsets.ModelViewSet):
-    serializer_class = JobPostSerializer
-
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = JobPostFilter
     search_fields = [
+        "name",
         'expertise__name',
         'skills__name',
-        'title__name',
+        'titles__name',
         'location',
         'requirements',
         'description',
-        'employerProfile__company_name',
+        'employer__company_name',
     ]
 
+    def get_serializer_class(self):
+        if self.request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return JobPostReadSerializer
+        return JobPostWriteSerializer
+
     def get_queryset(self):
+        queryset = JobPost.objects.select_related(
+            'employer',
+            'expertise',
+            'salary'
+        ).prefetch_related(
+            'titles',
+            'skills'
+        )
+
         user = self.request.user
         if user.is_authenticated and hasattr(user, 'role') and user.role == 'EMPLOYER':
-            return JobPost.objects.filter(employerProfile=user.employerProfile)
-        return JobPost.objects.all()
+            return queryset.filter(employer=user.employer_profile)
+        return queryset
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -56,38 +70,50 @@ class JobPostViewSet(viewsets.ModelViewSet):
         return [AllowAny()]
 
     def perform_create(self, serializer):
-        expertise_data = self.request.data.get('expertise')
-        if expertise_data:
-            expertise, _ = Expertise.objects.get_or_create(name=expertise_data.get('name', '').strip())
-            serializer.save(expertise=expertise, employerProfile=self.request.user.employerProfile)
-        else:
-            serializer.save(employerProfile=self.request.user.employerProfile)
+        serializer.save(employer=self.request.user.employer_profile)
 
     def perform_update(self, serializer):
-        expertise_data = self.request.data.get('expertise')
-        if expertise_data:
-            expertise, _ = Expertise.objects.get_or_create(name=expertise_data.get('name', '').strip())
-            serializer.save(expertise=expertise)
-        else:
-            serializer.save()
+        serializer.save()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+
+        self.check_object_permissions(request, instance)
+
         if instance.is_active:
             return api_response(
                 status=status.HTTP_400_BAD_REQUEST,
-                message="You must deactivate the job post before deleting it."
+                message="You must deactivate the job post before deleting it.",
+                data={'is_active': instance.is_active}
             )
+
         self.perform_destroy(instance)
         return api_response(
             status=status.HTTP_200_OK,
-            message="Job post deleted successfully."
+            message="Job post deleted successfully.",
+            data={'deleted_at': timezone.now()}
         )
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
 
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
+        serializer = self.get_serializer(queryset, many=True)
+        return api_response(
+            status=status.HTTP_200_OK,
+            message="Job posts retrieved successfully",
+            data=serializer.data
+        )
 
-
-
-
-
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return api_response(
+            status=status.HTTP_200_OK,
+            message="Job post retrieved successfully",
+            data=serializer.data
+        )

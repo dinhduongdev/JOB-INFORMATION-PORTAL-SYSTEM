@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from proxies.s3.avatars import list_user_avatar_keys
 
-from .models import Role, User
+from .models import Role, User, ApplicantProfile, EmployerProfile, Skill, Title, WorkExperience
 
 
 class UserBaseSerializer(serializers.ModelSerializer):
@@ -117,3 +117,149 @@ class UserUpdateSerializer(UserBaseSerializer):
         #     setattr(instance, attr, value)
 
         return super().update(instance, validated_data)
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ["id", "name"]
+        read_only_fields = ["id"]
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Skill name cannot be empty.")
+        return value
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Title
+        fields = ["id", "name"]
+        read_only_fields = ["id"]
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Title name cannot be empty.")
+        return value
+
+
+class WorkExperienceShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkExperience
+        fields = ["id", "company_name", "title", "start_date", "end_date"]
+
+
+class ApplicantProfileSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    skills = SkillSerializer(many=True, required=False)
+    skill_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Skill.objects.all(), write_only=True, many=True,required=False
+    )
+    work_experiences =  WorkExperienceShortSerializer(many=True, read_only=True)
+    class Meta:
+        model = ApplicantProfile
+        fields = [
+            "id",
+            "user",
+            "phone_number",
+            "description",
+            "skills",
+            "skill_ids",
+            "work_experiences",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "user", "skills", "created_at", "updated_at"]
+        extra_kwargs = {
+            "phone_number": {"required": False, "allow_blank": True},
+            "description": {"required": False},
+        }
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        skill_ids = validated_data.pop("skill_ids", [])
+
+        if ApplicantProfile.objects.filter(user=user).exists():
+            raise serializers.ValidationError("Applicant profile already exists for this user.")
+
+        profile = ApplicantProfile.objects.create(user=user, **validated_data)
+        if skill_ids:
+            profile.skills.set(skill_ids)
+
+        return profile
+
+    def update(self, instance, validated_date):
+        skill_ids = validated_date.pop("skill_ids", [])
+
+        for attr, vallue in validated_date.items():
+            setattr(instance, attr, vallue)
+
+        instance.save()
+
+        if skill_ids is not None:
+            instance.skills.set(skill_ids)
+
+        return instance
+
+
+class EmployerProfileSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = EmployerProfile
+        fields = [
+            "id",
+            "user",
+            "phone_number",
+            "company_name",
+            "company_description",
+        ]
+        read_only_fields = ["id", "user"]
+        extra_kwargs = {
+            "phone_number": {"required": False, "allow_blank": True},
+            "company_name": {"required": False, "allow_blank": True},
+            "company_description": {"required": False},
+        }
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        if EmployerProfile.objects.filter(user=user).exists():
+            raise serializers.ValidationError("Employer profile already exists for this user.")
+
+        return EmployerProfile.objects.create(user=user, **validated_data)
+
+
+class WorkExperienceSerializer(serializers.ModelSerializer):
+    applicant = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = WorkExperience
+        fields = [
+            "id",
+            "applicant",
+            "company_name",
+            "title",
+            "start_date",
+            "end_date",
+            "description",
+        ]
+        read_only_fields = ["id", "applicant"]
+        extra_kwargs = {
+            "company_name": {"required": True, "allow_blank": False},
+            "title": {"required": False, "allow_null": True},
+            "start_date": {"required": True, "allow_null": False},
+            "end_date": {"required": False, "allow_null": True},
+            "description": {"required": False},
+        }
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        applicant = getattr(user, "applicant_profile", None)
+
+        if not applicant:
+            raise serializers.ValidationError("Applicant profile does not exist for this user.")
+
+        return WorkExperience.objects.create(applicant=applicant, **validated_data)
+
+
