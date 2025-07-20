@@ -82,7 +82,7 @@ class ApplicantProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicantProfileSerializer
 
     def get_permissions(self):
-        if self.action in ["retrieve", " list"]:
+        if self.action in ["retrieve", "list"]:
             return [permissions.IsAdminOrOwnerApplicant]
 
         elif self.action in ["create", "update", "partial_update", "destroy"]:

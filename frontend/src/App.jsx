@@ -36,7 +36,7 @@ function App() {
           }
         />
         <Route path="/cv" element={<CVPage />} />
-        <Route path="/create-cv" element={<CreateCVPage />} />
+        <Route path="/profile-cv" element={<CreateCVPage />} />
       </Routes>
 
       <Footer />
