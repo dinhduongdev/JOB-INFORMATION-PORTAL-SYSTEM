@@ -149,13 +149,11 @@ class WorkExperienceShortSerializer(serializers.ModelSerializer):
         fields = ["id", "company_name", "title", "start_date", "end_date"]
 
 
-class ApplicantProfileSerializer(serializers.ModelSerializer):
+class ApplicantProfileReadSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
-    skills = SkillSerializer(many=True, required=False)
-    skill_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Skill.objects.all(), write_only=True, many=True,required=False
-    )
-    work_experiences =  WorkExperienceShortSerializer(many=True, read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+    work_experiences = WorkExperienceShortSerializer(many=True, read_only=True)
+
     class Meta:
         model = ApplicantProfile
         fields = [
@@ -164,12 +162,32 @@ class ApplicantProfileSerializer(serializers.ModelSerializer):
             "phone_number",
             "description",
             "skills",
-            "skill_ids",
             "work_experiences",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "user", "skills", "created_at", "updated_at"]
+
+
+class ApplicantProfileCreateSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    skill_ids = serializers.PrimaryKeyRelatedField(
+            queryset=Skill.objects.all(), write_only=True, many=True,required=False
+        )
+    work_experience_ids = serializers.PrimaryKeyRelatedField(
+        queryset=WorkExperience.objects.all(), write_only=True, many=True, required=False
+    )
+
+    class Meta:
+        model = ApplicantProfile
+        fields = [
+            "id",
+            "user",
+            "phone_number",
+            "description",
+            "skill_ids",
+            "work_experience_ids",
+        ]
+        read_only_fields = ["id", "user"]
         extra_kwargs = {
             "phone_number": {"required": False, "allow_blank": True},
             "description": {"required": False},
@@ -200,6 +218,59 @@ class ApplicantProfileSerializer(serializers.ModelSerializer):
             instance.skills.set(skill_ids)
 
         return instance
+
+
+# class ApplicantProfileSerializer(serializers.ModelSerializer):
+#     user = serializers.PrimaryKeyRelatedField(read_only=True)
+#     skills = SkillSerializer(many=True, required=False)
+#     skill_ids = serializers.PrimaryKeyRelatedField(
+#         queryset=Skill.objects.all(), write_only=True, many=True,required=False
+#     )
+#     work_experiences =  WorkExperienceShortSerializer(many=True, read_only=True)
+#     class Meta:
+#         model = ApplicantProfile
+#         fields = [
+#             "id",
+#             "user",
+#             "phone_number",
+#             "description",
+#             "skills",
+#             "skill_ids",
+#             "work_experiences",
+#             "created_at",
+#             "updated_at",
+#         ]
+#         read_only_fields = ["id", "user", "skills", "created_at", "updated_at"]
+#         extra_kwargs = {
+#             "phone_number": {"required": False, "allow_blank": True},
+#             "description": {"required": False},
+#         }
+#
+#     def create(self, validated_data):
+#         user = self.context["request"].user
+#         skill_ids = validated_data.pop("skill_ids", [])
+#
+#         if ApplicantProfile.objects.filter(user=user).exists():
+#             raise serializers.ValidationError("Applicant profile already exists for this user.")
+#
+#         profile = ApplicantProfile.objects.create(user=user, **validated_data)
+#         if skill_ids:
+#             profile.skills.set(skill_ids)
+#
+#         return profile
+#
+#     def update(self, instance, validated_date):
+#         skill_ids = validated_date.pop("skill_ids", [])
+#
+#         for attr, vallue in validated_date.items():
+#             setattr(instance, attr, vallue)
+#
+#         instance.save()
+#
+#         if skill_ids is not None:
+#             instance.skills.set(skill_ids)
+#
+#         return instance
 
 
 class EmployerProfileSerializer(serializers.ModelSerializer):
