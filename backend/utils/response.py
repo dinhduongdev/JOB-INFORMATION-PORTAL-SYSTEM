@@ -110,4 +110,3 @@ def custom_exception_handler(exc, context):
         message="An unexpected error occurred.",
         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
-

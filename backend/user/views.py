@@ -6,9 +6,9 @@ from rest_framework.permissions import AllowAny
 from proxies.s3.avatars import get_random_default_avatar_key
 from utils.response import api_response
 
-from . import dao, models
-from .serializers import UserBaseSerializer, UserCreateSerializer
-from .tasks import send_account_activation_email
+from user import dao, models, permissions
+from user.serializers import UserBaseSerializer, UserCreateSerializer, SkillSerializer, ApplicantProfileSerializer, WorkExperienceSerializer
+from user.tasks import send_account_activation_email
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -53,7 +53,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             user.employer_profile = models.EmployerProfile.objects.create(
                 user=user,
             )
-        if user.is_employee:
+        if user.is_applicant:
             user.employee_profile = models.ApplicantProfile.objects.create(
                 user=user,
             )
@@ -63,3 +63,190 @@ class AuthViewSet(viewsets.GenericViewSet):
             message="Account activated successfully.",
             status=status.HTTP_200_OK,
         )
+
+
+class SkillViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = models.Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [AllowAny()]
+
+
+class TitleViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = models.Title.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [AllowAny()]
+
+
+class ApplicantProfileViewSet(viewsets.ModelViewSet):
+    queryset = models.ApplicantProfile.objects.all()
+    serializer_class = ApplicantProfileSerializer
+
+    def get_permissions(self):
+        if self.action in ["retrieve", " list"]:
+            return [permissions.IsAdminOrOwnerApplicant]
+
+        elif self.action in ["create", "update", "partial_update", "destroy"]:
+            return [permissions.IsApplicant]
+
+        return [permissions.IsAuthenticated]
+
+
+    @action(detail=False, methods=["get"], url_path="me")
+    def get_my_profile(self, request: HttpRequest):
+        serializer = self.get_serializer(
+            request.user.applicant_profile, context={"request": request}
+        )
+        return api_response(
+            data=serializer.data,
+            status=status.HTTP_200_OK,
+            message="Applicant profile retrieved successfully.",
+        )
+
+    @action(detail=False, methods=["post"], url_path="me")
+    def create_my_profile(self, request: HttpRequest):
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        profile = serializer.save()
+
+        return api_response(
+            data=self.get_serializer(profile).data,
+            status=status.HTTP_201_CREATED,
+            message="Applicant profile created successfully.",
+        )
+
+    @action(detail=False, methods=["put", "patch"], url_path="me")
+    def update_my_profile(self, request: HttpRequest):
+        profile = request.user.applicant_profile
+        serializer = self.get_serializer(
+            profile,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        profile = serializer.save()
+
+        return api_response(
+            data=self.get_serializer(profile).data,
+            status=status.HTTP_200_OK,
+            message="Applicant profile updated successfully.",
+        )
+
+
+class EmployerProfileViewSet(viewsets.ModelViewSet):
+    queryset = models.EmployerProfile.objects.all()
+    serializer_class = ApplicantProfileSerializer
+
+    def get_permissions(self):
+        if self.action in ["retrieve", " list"]:
+            return [permissions.IsAdminOrOwnerApplicantOrEmployerOfApplicant]
+
+        elif self.action in ["create", "update", "partial_update"]:
+            return [permissions.IsEmployer]
+
+        elif self.action == "destroy":
+            return [permissions.IsAdmin]
+
+        return [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=["get"], url_path="me")
+    def get_my_profile(self, request: HttpRequest):
+        serializer = self.get_serializer(
+            request.user.employer_profile, context={"request": request}
+        )
+        return api_response(
+            data=serializer.data,
+            status=status.HTTP_200_OK,
+            message="Employer profile retrieved successfully.",
+        )
+
+    @action(detail=False, methods=["post"], url_path="me")
+    def create_my_profile(self, request: HttpRequest):
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        profile = serializer.save()
+
+        return api_response(
+            data=self.get_serializer(profile).data,
+            status=status.HTTP_201_CREATED,
+            message="Employer profile created successfully.",
+        )
+
+    @action(detail=False, methods=["put", "patch"], url_path="me")
+    def update_my_profile(self, request: HttpRequest):
+        profile = request.user.employer_profile
+        serializer = self.get_serializer(
+            profile,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        profile = serializer.save()
+
+        return api_response(
+            data=self.get_serializer(profile).data,
+            status=status.HTTP_200_OK,
+            message="Employer profile updated successfully.",
+        )
+
+
+class WorkExperienceViewSet(viewsets.ModelViewSet):
+    queryset = models.WorkExperience.objects.all()
+    serializer_class = WorkExperienceSerializer
+
+    def get_permissions(self):
+        if self.action in ["retrieve", "list"]:
+            return [permissions.IsAdminOrOwnerApplicantOrEmployerOfApplicant]
+
+        elif self.action in ["create", "update", "partial_update", "destroy"]:
+            return [permissions.IsApplicant]
+
+        return [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=["get"], url_path="me")
+    def get_my_work_experience(self, request: HttpRequest, pk=None):
+        profile = request.user.applicant_profile
+        work_experience = profile.work_experience.filter(id=pk).first()
+
+        if not work_experience:
+            return api_response(
+                data=None,
+                status=status.HTTP_404_NOT_FOUND,
+                message="Work experience not found."
+            )
+
+        serializer = self.get_serializer(work_experience, context={"request": request})
+        return api_response(
+            data=serializer.data,
+            status=status.HTTP_200_OK,
+            message="Work experience retrieved successfully."
+        )
+
+    @action(detail=False, methods=["post"], url_path="me")
+    def create_my_work_experience(self, request: HttpRequest):
+        applicant = request.user.applicant_profile
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(applicant=applicant)
+
+        return api_response(
+            data=serializer.data,
+            status=status.HTTP_201_CREATED,
+            message="Work experience created successfully."
+        )
+
+
+
+
+
+
+
+

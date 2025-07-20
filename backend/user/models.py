@@ -33,7 +33,7 @@ class MyUserManager(BaseUserManager):
 
 class Role(models.TextChoices):
     EMPLOYER = "Employer"
-    EMPLOYEE = "Employee"
+    APPLICANT = "Applicant"
     ADMIN = "Admin"
 
 
@@ -46,7 +46,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=10,
         choices=Role.choices,
-        default=Role.EMPLOYEE,
+        default=Role.APPLICANT,
         blank=False,
         null=False,
     )
@@ -61,8 +61,8 @@ class User(AbstractUser):
         return self.role == Role.EMPLOYER
 
     @property
-    def is_employee(self):
-        return self.role == Role.EMPLOYEE
+    def is_applicant(self):
+        return self.role == Role.APPLICANT
 
     @property
     def avatar_url(self):
@@ -83,8 +83,13 @@ class ApplicantProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     skills = models.ManyToManyField(
-        "Skill", blank=True, related_name="applicant_profiles"
+        "Skill",
+        through="ApplicantSkill",
+        blank=True,
+        related_name="applicant_profiles"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Profile of {self.user.email}"
@@ -107,6 +112,14 @@ class WorkExperience(models.Model):
     end_date = models.DateField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["applicant", "company_name", "title"],
+                name="unique_company_title_per_applicant"
+            )
+        ]
+
     def __str__(self):
         return (
             f"{self.title} at {self.company_name} ({self.start_date} - {self.end_date})"
@@ -118,6 +131,17 @@ class Skill(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+
+class ApplicantSkill(models.Model):
+    applicant = models.ForeignKey(ApplicantProfile, on_delete=models.CASCADE)
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("applicant", "skill")
+
+    def __str__(self):
+        return f"{self.applicant} - {self.skill}"
 
 
 class EmployerProfile(models.Model):

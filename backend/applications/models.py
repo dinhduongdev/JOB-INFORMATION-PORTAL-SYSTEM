@@ -5,7 +5,7 @@ from user.models import ApplicantProfile
 
 
 class CV(models.Model):
-    applicant_profile = models.ForeignKey(
+    applicant = models.ForeignKey(
         ApplicantProfile, on_delete=models.CASCADE, related_name="cvs"
     )
     link = models.URLField(max_length=200, blank=True, null=True)
@@ -13,7 +13,7 @@ class CV(models.Model):
 
 
 class Application(models.Model):
-    applicant_profile = models.ForeignKey(
+    applicant = models.ForeignKey(
         ApplicantProfile, on_delete=models.CASCADE, related_name="applications"
     )
     job_post = models.ForeignKey(
@@ -32,7 +32,7 @@ class Application(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["applicant_profile", "job_post"],
+                fields=["applicant", "job_post"],
                 name="unique_application_per_job_post",
             )
         ]
