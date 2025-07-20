@@ -7,7 +7,8 @@ from proxies.s3.avatars import get_random_default_avatar_key
 from utils.response import api_response
 
 from user import dao, models, permissions
-from user.serializers import UserBaseSerializer, UserCreateSerializer, SkillSerializer, ApplicantProfileSerializer, WorkExperienceSerializer
+from user.serializers import UserBaseSerializer, UserCreateSerializer, SkillSerializer, WorkExperienceSerializer, \
+    EmployerProfileSerializer, ApplicantProfileCreateSerializer, ApplicantProfileReadSerializer
 from user.tasks import send_account_activation_email
 
 
@@ -79,16 +80,20 @@ class TitleViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ApplicantProfileViewSet(viewsets.ModelViewSet):
     queryset = models.ApplicantProfile.objects.all()
-    serializer_class = ApplicantProfileSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.action in ["create", "update", "partial_update"]:
+            return ApplicantProfileCreateSerializer(*args, **kwargs)
+        return ApplicantProfileReadSerializer(*args, **kwargs)
 
     def get_permissions(self):
-        if self.action in ["retrieve", "list"]:
-            return [permissions.IsAdminOrOwnerApplicant]
+        if self.action in ["retrieve", " list"]:
+            return [permissions.IsAdminOrOwnerApplicant()]
 
         elif self.action in ["create", "update", "partial_update", "destroy"]:
-            return [permissions.IsApplicant]
+            return [permissions.IsApplicant()]
 
-        return [permissions.IsAuthenticated]
+        return [permissions.IsAuthenticated()]
 
 
     @action(detail=False, methods=["get"], url_path="me")
@@ -137,7 +142,7 @@ class ApplicantProfileViewSet(viewsets.ModelViewSet):
 
 class EmployerProfileViewSet(viewsets.ModelViewSet):
     queryset = models.EmployerProfile.objects.all()
-    serializer_class = ApplicantProfileSerializer
+    serializer_class = EmployerProfileSerializer
 
     def get_permissions(self):
         if self.action in ["retrieve", " list"]:
