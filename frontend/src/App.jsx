@@ -7,6 +7,7 @@ import RegisterPage from "./pages/RegisterPage";
 import "./App.css";
 import CVPage from "./pages/CVPage";
 import CreateCVPage from "./pages/CreateCVPage";
+import CVTemplatesPage from "./pages/CVTemplatesPage";
 
 function App() {
   return (
@@ -36,7 +37,10 @@ function App() {
           }
         />
         <Route path="/cv" element={<CVPage />} />
-        <Route path="/profile-cv" element={<CreateCVPage />} />
+        <Route path="/profile-cv">
+          <Route index element={<CreateCVPage />} />
+          <Route path="cv-templates" element={<CVTemplatesPage />} />
+        </Route>
       </Routes>
 
       <Footer />

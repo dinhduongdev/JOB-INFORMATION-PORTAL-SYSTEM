@@ -3,6 +3,9 @@ import logo from "../assets/logo.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
+import "../css/Header.css";
+
+
 
 const Header = () => {
   const { token, user } = useSelector((state) => state.auth);
@@ -53,26 +56,44 @@ const Header = () => {
           </a>
 
           {token ? (
-            <>
-              <span className="me-2 text-white">
-                Xin chào, {user?.username || "Người dùng"}!
-              </span>
+            <div className="dropdown hover-dropdown">
               <button
-                className="btn btn-outline-danger me-2"
-                onClick={handleLogout}
+                className="btn btn-secondary dropdown-toggle d-flex align-items-center"
+                type="button"
+                aria-expanded="false"
+                aria-label="User menu"
               >
-                Đăng Xuất
+                <span className="me-2 text-white">
+                  Xin chào, {user?.username || "Người dùng"}!
+                </span>
+                <i className="bi bi-person-circle"></i>
               </button>
-            </>
+              <ul className="dropdown-menu">
+                <li>
+                  <Link className="dropdown-item" to="/profile-cv">
+                    Profile
+                  </Link>
+                </li>
+                <li>
+                  <button className="dropdown-item" onClick={handleLogout}>
+                    Đăng Xuất
+                  </button>
+                </li>
+              </ul>
+            </div>
           ) : (
-            <div className="dropdown">
-                <button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i className="bi bi-person-circle"></i> {/* Example using Bootstrap Icons */}
-                </button>
-                <ul className="dropdown-menu">
-                    <li><Link className="dropdown-item" to="/login">Đăng Nhập</Link></li>
-                    <li><Link className="dropdown-item" to="/register">Đăng Ký</Link></li>
-                </ul>
+            <div className="dropdown hover-dropdown">
+              <button
+                className="btn btn-secondary dropdown-toggle"
+                type="button"
+                aria-expanded="false"
+              >
+                <i className="bi bi-person-circle"></i>
+              </button>
+              <ul className="dropdown-menu">
+                <li><Link className="dropdown-item" to="/login">Đăng Nhập</Link></li>
+                <li><Link className="dropdown-item" to="/register">Đăng Ký</Link></li>
+              </ul>
             </div>
           )}
 

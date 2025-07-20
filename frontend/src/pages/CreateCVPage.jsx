@@ -6,6 +6,7 @@ import {
   BsGeoAlt, BsLink45Deg, BsChevronDown, BsX, BsLightbulb 
 } from 'react-icons/bs';
 import { FiGrid, FiFileText, FiStar } from "react-icons/fi";
+import { Link } from 'react-router-dom';
 
 const sections = [
   { id: 'about', title: 'Giới thiệu bản thân', description: 'Giới thiệu điểm mạnh và số năm kinh nghiệm của bạn' },
@@ -300,7 +301,7 @@ const CreateCVPage = () => {
                     <li><BsPlusCircle className="text-danger"/> Thêm Kinh nghiệm làm việc</li>
                     <li><BsChevronDown /> Thêm thông tin khác</li>
                   </ul>
-                  <button className="btn btn-red mt-3">Xem và Tải CV</button>
+                  <Link to="/profile-cv/cv-templates" className="btn btn-red mt-3">Xem và Tải CV</Link>
                 </div>
               </div>
             </div>

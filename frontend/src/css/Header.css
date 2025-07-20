@@ -1,0 +1,35 @@
+/* Ẩn dropdown menu theo mặc định */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  z-index: 1000;
+}
+
+/* Hiển thị dropdown menu khi hover vào .hover-dropdown */
+.hover-dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+/* Đảm bảo dropdown toggle không bị ảnh hưởng bởi hover trực tiếp */
+.dropdown-toggle {
+  cursor: pointer;
+}
+
+/* Tùy chỉnh vị trí và kiểu dáng (tùy chọn) */
+.dropdown-menu {
+  min-width: 10rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.25rem;
+  background-color: #fff;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  color: #000;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
