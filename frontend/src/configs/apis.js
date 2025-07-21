@@ -9,6 +9,8 @@ export const endpoints = {
     myApplicantProfile : "/api/v1/applicant-profile/me/",
     myApplicantProfileUpdate: "/api/v1/applicant-profile/me/update/",
     skills: "/api/v1/skills/",
+    jobTitle: "/api/v1/titles/",
+    workExperience: "/api/v1/work-experience/",
 }
 
 export const authApis = (token) => {

@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import html2pdf from 'html2pdf.js';
 import '../css/CVTemplatesPage.css';
-import { BsArrowLeft, BsTelephone, BsEnvelope, BsGeoAlt, BsCalendarEvent } from 'react-icons/bs';
+import { BsArrowLeft, BsTelephone, BsEnvelope, BsGeoAlt, BsCalendarEvent, BsDownload } from 'react-icons/bs';
+import { fetchApplicantProfile } from '../features/applicant-profile/applicantProfileActions';
+import { fetchJobTitles } from '../features/job-title/jobTitleAction';
 
 const templates = [
   { id: 'classic', name: 'Classic', img: 'https://placehold.co/400x565/ffffff/333?text=Classic+Template' },
@@ -10,68 +14,105 @@ const templates = [
   { id: 'creative', name: 'Creative', img: 'https://placehold.co/400x565/333333/FFFFFF?text=Creative+Template' },
 ];
 
-const CVPreviewComponent = ({ profile, template, color }) => {
+// Sử dụng forwardRef cho CVPreviewComponent
+const CVPreviewComponent = React.forwardRef(({ profile, template, color, jobTitles }, ref) => {
   const templateStyles = {
     classic: { backgroundColor: '#fff', color: '#333' },
     elegant: { backgroundColor: '#1A2E4A', color: '#fff' },
     modern: { backgroundColor: '#EAEAEA', color: '#333' },
     creative: { backgroundColor: '#333333', color: '#fff' },
   };
+  const workExperienceText = profile.work_experiences
+    .map(exp => `${exp.company_name} - ${jobTitles.find(jt => jt.id === exp.title)?.name || 'Unknown Title'} (${exp.start_date} - ${exp.end_date || 'Present'})`)
+    .join('\n');
+  const skillsText = profile.skills.map(skill => skill.name).join(', ');
+
   return (
-    <div className="cv-preview-container" style={{ ...templateStyles[template.id], borderColor: color }}>
+    <div ref={ref} className="cv-preview-container" style={{ ...templateStyles[template.id], borderColor: color, width: '210mm', height: '297mm' }}>
       <div className="cv-header" style={{ backgroundColor: template.id === 'elegant' ? '#2a3b4c' : '#3d4a58' }}>
-        <img src={profile.avatar} alt="Avatar" className="cv-avatar" />
+        <img src={profile.avatar || 'https://placehold.co/100x100/EFEFEF/333?text=PD'} alt="Avatar" className="cv-avatar" />
         <div className="cv-header-info">
-          <h1>{profile.name}</h1>
-          <p className="cv-title">{profile.title}</p>
+          <h1>{profile.name || 'Phạm Đình Dương'}</h1>
+          <p className="cv-title">{profile.title || 'ADD YOUR TITLE'}</p>
           <div className="cv-contact-info">
-            <span><BsTelephone /> {profile.phone}</span>
-            <span><BsCalendarEvent /> {profile.birthDate}</span>
-            <span><BsEnvelope /> {profile.email}</span>
-            <span><BsGeoAlt /> {profile.location}</span>
+            <span><BsTelephone /> {profile.phone_number || 'Add your phone number'}</span>
+            <span><BsCalendarEvent /> {profile.birth_date || 'Add your date of birth'}</span>
+            <span><BsEnvelope /> {profile.user?.email || 'duongxummo@gmail.com'}</span>
+            <span><BsGeoAlt /> {profile.address || 'Add your current location'}</span>
           </div>
         </div>
       </div>
       <div className="cv-body">
         <div className="cv-section">
           <div className="cv-section-title">About me</div>
-          <div className="cv-section-content">{profile.aboutMe}</div>
+          <div className="cv-section-content">{profile.description || 'Update your about me'}</div>
         </div>
         <div className="cv-section">
           <div className="cv-section-title">Education</div>
-          <div className="cv-section-content text-muted">{profile.education}</div>
+          <div className="cv-section-content text-muted">{profile.education || 'Update your education background'}</div>
         </div>
         <div className="cv-section">
-          <div className="cv-section-title">Skill</div>
-          <div className="cv-section-content text-muted">{profile.skills}</div>
+          <div className="cv-section-title">Skills</div>
+          <div className="cv-section-content text-muted">{skillsText || 'Update your specialist skills'}</div>
         </div>
         <div className="cv-section">
           <div className="cv-section-title">Work Experience</div>
-          <div className="cv-section-content text-muted">{profile.workExperience}</div>
+          <div className="cv-section-content text-muted">{workExperienceText || 'Update your work experience'}</div>
         </div>
       </div>
     </div>
   );
-};
+});
 
 const CVTemplatesPage = () => {
-  const { state } = useLocation();
-  const profile = state?.profile || {
-    name: 'Phạm Đình Dương',
-    title: 'ADD YOUR TITLE',
-    phone: 'Add your phone number',
-    email: 'duongxummo@gmail.com',
-    birthDate: 'Add your date of birth',
-    location: 'Add your current location',
-    avatar: 'https://placehold.co/100x100/EFEFEF/333?text=PD',
-    aboutMe: 'Phạm Đình Dương',
-    education: 'Update your education background',
-    skills: 'Update your specialist skills',
-    workExperience: 'Update your work experience',
-  };
+  const dispatch = useDispatch();
+  const { profile, status } = useSelector((state) => state.applicantProfile || { profile: null, status: 'idle' });
+  const { jobTitles, status: jobTitleStatus } = useSelector((state) => state.jobTitle || { jobTitles: [], status: 'idle' });
   const [selectedTemplate, setSelectedTemplate] = useState(templates[1]);
   const [selectedColor, setSelectedColor] = useState('#4A90E2');
   const [selectedLanguage, setSelectedLanguage] = useState('VI');
+  const cvRef = useRef();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && (status === 'idle' || jobTitleStatus === 'idle')) {
+      console.log('Fetching data with token:', token);
+      dispatch(fetchApplicantProfile(token));
+      dispatch(fetchJobTitles(token));
+    } else if (!token) {
+      console.warn('No token found in localStorage');
+    }
+  }, [dispatch, status, jobTitleStatus]);
+
+  const handleDownloadPDF = () => {
+    const element = cvRef.current;
+    console.log('CV Element:', element); // Debug tham chiếu
+    if (element) {
+      html2pdf().from(element).set({
+        margin: 10,
+        filename: `${displayProfile.name}_CV.pdf`,
+        html2canvas: { scale: 2, useCORS: true, logging: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).save().then(() => console.log('PDF downloaded successfully')).catch(err => console.error('PDF Error:', err));
+    } else {
+      console.error('CV element not found');
+    }
+  };
+
+  const displayProfile = profile?.data || {
+    name: 'Phạm Đình Dương',
+    title: 'ADD YOUR TITLE',
+    phone_number: 'Add your phone number',
+    email: 'duongxummo@gmail.com',
+    birth_date: 'Add your date of birth',
+    address: 'Add your current location',
+    avatar: 'https://placehold.co/100x100/EFEFEF/333?text=PD',
+    description: 'Update your about me',
+    education: 'Update your education background',
+    skills: [],
+    work_experiences: [],
+    user: { email: 'duongxummo@gmail.com' },
+  };
 
   return (
     <div className="templates-page">
@@ -107,7 +148,7 @@ const CVTemplatesPage = () => {
         </aside>
 
         <section className="template-preview">
-          <CVPreviewComponent profile={profile} template={selectedTemplate} color={selectedColor} />
+          <CVPreviewComponent ref={cvRef} profile={displayProfile} template={selectedTemplate} color={selectedColor} jobTitles={jobTitles} />
         </section>
       </main>
 
@@ -140,7 +181,9 @@ const CVTemplatesPage = () => {
         </div>
         <div className="footer-actions">
           <span>Complete 70% of your profile to unlock Download CV</span>
-          <button className="btn btn-red">Update your profile</button>
+          <button className="btn btn-red" onClick={handleDownloadPDF} disabled={status !== 'succeeded' || jobTitleStatus !== 'succeeded'}>
+            <BsDownload /> Download CV
+          </button>
         </div>
       </footer>
     </div>

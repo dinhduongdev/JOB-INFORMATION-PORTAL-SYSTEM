@@ -16,7 +16,7 @@ const skillSlice = createSlice({
       })
       .addCase(fetchSkills.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.skills = action.payload; // Nhận toàn bộ danh sách từ tất cả các trang
+        state.skills = action.payload;
       })
       .addCase(fetchSkills.rejected, (state, action) => {
         state.status = 'failed';

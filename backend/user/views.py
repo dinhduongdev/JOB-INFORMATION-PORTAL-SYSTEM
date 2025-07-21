@@ -358,12 +358,12 @@ class WorkExperienceViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["retrieve", "list"]:
-            return [permissions.IsAdminOrOwnerApplicantOrEmployerOfApplicant]
+            return [permissions.IsAdminOrOwnerApplicantOrEmployerOfApplicant()]
 
         elif self.action in ["create", "update", "partial_update", "destroy"]:
-            return [permissions.IsApplicant]
+            return [permissions.IsApplicant()]
 
-        return [permissions.IsAuthenticated]
+        return [permissions.IsAuthenticated()]
 
     @action(detail=True, methods=["get"], url_path="me")
     def get_my_work_experience(self, request: HttpRequest, pk=None):
