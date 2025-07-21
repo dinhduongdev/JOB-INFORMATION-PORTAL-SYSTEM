@@ -2,14 +2,16 @@ from django.http import HttpRequest
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from proxies.s3.avatars import get_random_default_avatar_key
+from user.models import User
 from utils.response import api_response
 
 from user import dao, models, permissions
 from user.serializers import UserBaseSerializer, UserCreateSerializer, SkillSerializer, WorkExperienceSerializer, \
-    EmployerProfileSerializer, ApplicantProfileUpdateSerializer, ApplicantProfileReadSerializer
+    EmployerProfileSerializer, ApplicantProfileUpdateSerializer, ApplicantProfileReadSerializer, UserUpdateSerializer
 from user.tasks import send_account_activation_email
 
 
@@ -67,16 +69,136 @@ class AuthViewSet(viewsets.GenericViewSet):
         )
 
 
+class UserViewSet(viewsets.ViewSet):
+    """
+    ViewSet for user profile updates only
+    Supported actions:
+    - update_my_profile: PUT/PATCH /api/users/me/ (authenticated users)
+    """
+    queryset = User.objects.all()
+    serializer_class = UserUpdateSerializer
+
+    def get_permissions(self):
+        if self.action in ["update_my_profile"]:
+            return [IsAuthenticated()]
+        return [IsAuthenticated()]
+
+    @action(detail=False, methods=["put", "patch"], url_path="me")
+    def update_my_profile(self, request: HttpRequest):
+        """
+    Update authenticated user's profile
+    Supports partial update (PATCH) and full update (PUT)
+    Password update requires current_password, new_password and confirm_password
+
+    Parameters:
+    -----------
+    Request Body (application/json):
+    {
+        "first_name": "string",          # Optional
+        "last_name": "string",           # Optional
+        "avatar": "string",              # Optional - avatar key
+        "current_password": "string",    # Required when changing password
+        "new_password": "string",        # Required when changing password
+        "confirm_password": "string"     # Required when changing password
+    }
+
+    Responses:
+    ----------
+    200 OK:
+    {
+        "id": "integer",
+        "email": "string",
+        "first_name": "string",
+        "last_name": "string",
+        "avatar": "string",
+        "role": "string",
+        "is_active": "boolean",
+        "message": "string"
+    }
+
+    400 Bad Request:
+    {
+        "error": {
+            "current_password": ["Current password is incorrect."],
+            "new_password": ["This password is too common."]
+        }
+    }
+
+    401 Unauthorized:
+    {
+        "detail": "Authentication credentials were not provided."
+    }
+
+    Example Requests:
+    ----------------
+    1. Update basic info:
+    PATCH /api/users/me/
+    {
+        "first_name": "John",
+        "last_name": "Doe"
+    }
+
+    2. Change password:
+    PUT /api/users/me/
+    {
+        "current_password": "old@123",
+        "new_password": "new@123",
+        "confirm_password": "new@123"
+    }
+    """
+        try:
+            user = request.user
+            serializer = self.serializer_class(
+                user,
+                data=request.data,
+                partial=request.method == "PATCH",
+                context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            updated_user = serializer.save()
+
+            response_data = {
+                "id": updated_user.id,
+                "email": updated_user.email,
+                "first_name": updated_user.first_name,
+                "last_name": updated_user.last_name,
+                "avatar": updated_user.avatar,
+                "role": updated_user.role,
+                "is_active": updated_user.is_active,
+                "message": "User profile updated successfully"
+            }
+
+            return api_response(data=response_data, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            raise NotFound("User not found")
+        except ValidationError as e:
+            return api_response(
+                message={"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return api_response(
+                message={"An error occurred during update"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def get_queryset(self):
+        return User.objects.filter(pk=self.request.user.pk)
+
+
 class SkillViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Skill.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [AllowAny()]
+    permission_classes = [AllowAny]
+    pagination_class = None
 
 
 class TitleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Title.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [AllowAny()]
+    permission_classes = [AllowAny]
+    pagination_class = None
 
 
 class ApplicantProfileViewSet(viewsets.ViewSet):
