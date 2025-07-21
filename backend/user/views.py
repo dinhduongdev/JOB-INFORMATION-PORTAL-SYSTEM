@@ -1,14 +1,15 @@
 from django.http import HttpRequest
-from rest_framework import status, viewsets
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from proxies.s3.avatars import get_random_default_avatar_key
 from utils.response import api_response
 
 from user import dao, models, permissions
 from user.serializers import UserBaseSerializer, UserCreateSerializer, SkillSerializer, WorkExperienceSerializer, \
-    EmployerProfileSerializer, ApplicantProfileCreateSerializer, ApplicantProfileReadSerializer
+    EmployerProfileSerializer, ApplicantProfileUpdateSerializer, ApplicantProfileReadSerializer
 from user.tasks import send_account_activation_email
 
 
@@ -78,66 +79,95 @@ class TitleViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny()]
 
 
-class ApplicantProfileViewSet(viewsets.ModelViewSet):
+class ApplicantProfileViewSet(viewsets.ViewSet):
     queryset = models.ApplicantProfile.objects.all()
 
-    def get_serializer(self, *args, **kwargs):
-        if self.action in ["create", "update", "partial_update"]:
-            return ApplicantProfileCreateSerializer(*args, **kwargs)
-        return ApplicantProfileReadSerializer(*args, **kwargs)
-
     def get_permissions(self):
-        if self.action in ["retrieve", " list"]:
-            return [permissions.IsAdminOrOwnerApplicant()]
-
-        elif self.action in ["create", "update", "partial_update", "destroy"]:
+        if self.action in ["retrieve", "list"]:
+            return [permissions.IsAdminOrOwnerApplicantOrEmployerOfApplicant()]
+        elif self.action in ["get_my_profile", "update_my_profile"]:
             return [permissions.IsApplicant()]
+        return [IsAuthenticated()]
 
-        return [permissions.IsAuthenticated()]
+    def get_serializer_class(self):
+        if self.action in ["update_my_profile"]:
+            return ApplicantProfileUpdateSerializer
+        return ApplicantProfileReadSerializer
 
+    def get_queryset(self):
+        return models.ApplicantProfile.objects.all().select_related('user').prefetch_related('skills', 'work_experiences')
 
-    @action(detail=False, methods=["get"], url_path="me")
-    def get_my_profile(self, request: HttpRequest):
-        serializer = self.get_serializer(
-            request.user.applicant_profile, context={"request": request}
+    def get_object(self, pk):
+        try:
+            return self.get_queryset().get(pk=pk)
+        except models.ApplicantProfile.DoesNotExist:
+            raise api_response(message="Applicant profile not found.", status=status.HTTP_404_NOT_FOUND)
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer_class()(queryset, many=True, context={"request": request})
+        return api_response(data=serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request: HttpRequest, pk=None):
+        profile = self.get_object(pk)
+        serializer = self.get_serializer_class()(
+            profile,
+            context={"request": request}
         )
         return api_response(
             data=serializer.data,
-            status=status.HTTP_200_OK,
-            message="Applicant profile retrieved successfully.",
+            status=status.HTTP_200_OK
         )
 
-    @action(detail=False, methods=["post"], url_path="me")
-    def create_my_profile(self, request: HttpRequest):
-        serializer = self.get_serializer(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        profile = serializer.save()
+    @action(detail=False, methods=["get"], url_path="me")
+    def get_my_profile(self, request: HttpRequest):
+        try:
+            profile = request.user.applicant_profile
+            serializer = self.get_serializer_class()(
+                profile,
+                context={"request": request}
+            )
+            return api_response(
+                data=serializer.data,
+                status=status.HTTP_200_OK,
+                message="Your applicant profile retrieved successfully."
+            )
+        except models.ApplicantProfile.DoesNotExist:
+            return api_response(
+                data=None,
+                status=status.HTTP_404_NOT_FOUND,
+                message="Applicant profile not found."
+            )
 
-        return api_response(
-            data=self.get_serializer(profile).data,
-            status=status.HTTP_201_CREATED,
-            message="Applicant profile created successfully.",
-        )
-
-    @action(detail=False, methods=["put", "patch"], url_path="me")
+    @action(detail=False, methods=["put", "patch"], url_path="me/update")
     def update_my_profile(self, request: HttpRequest):
-        profile = request.user.applicant_profile
-        serializer = self.get_serializer(
-            profile,
-            data=request.data,
-            partial=request.method == "PATCH",
-            context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        profile = serializer.save()
+        try:
+            profile = request.user.applicant_profile
+            serializer = self.get_serializer_class()(
+                profile,
+                data=request.data,
+                partial=request.method == "PATCH",
+                context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            updated_profile = serializer.save()
 
-        return api_response(
-            data=self.get_serializer(profile).data,
-            status=status.HTTP_200_OK,
-            message="Applicant profile updated successfully.",
-        )
+            response_serializer = ApplicantProfileReadSerializer(
+                updated_profile,
+                context={"request": request}
+            )
+
+            return api_response(
+                data=response_serializer.data,
+                status=status.HTTP_200_OK,
+                message="Applicant profile updated successfully."
+            )
+        except models.ApplicantProfile.DoesNotExist:
+            return api_response(
+                data=None,
+                status=status.HTTP_404_NOT_FOUND,
+                message="Applicant profile not found."
+            )
 
 
 class EmployerProfileViewSet(viewsets.ModelViewSet):

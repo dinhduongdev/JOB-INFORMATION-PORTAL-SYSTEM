@@ -168,55 +168,48 @@ class ApplicantProfileReadSerializer(serializers.ModelSerializer):
         ]
 
 
-class ApplicantProfileCreateSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+class ApplicantProfileUpdateSerializer(serializers.ModelSerializer):
     skill_ids = serializers.PrimaryKeyRelatedField(
-            queryset=Skill.objects.all(), write_only=True, many=True,required=False
-        )
+        queryset=Skill.objects.all(),
+        write_only=True,
+        many=True,
+        required=False,
+        source='skills'
+    )
     work_experience_ids = serializers.PrimaryKeyRelatedField(
-        queryset=WorkExperience.objects.all(), write_only=True, many=True, required=False
+        queryset=WorkExperience.objects.all(),
+        write_only=True,
+        many=True,
+        required=False,
+        source='work_experiences'
     )
 
     class Meta:
         model = ApplicantProfile
         fields = [
-            "id",
-            "user",
             "phone_number",
             "description",
             "skill_ids",
             "work_experience_ids",
         ]
-        read_only_fields = ["id", "user"]
         extra_kwargs = {
             "phone_number": {"required": False, "allow_blank": True},
-            "description": {"required": False},
+            "description": {"required": False, "allow_blank": True},
         }
 
-    def create(self, validated_data):
-        user = self.context["request"].user
-        skill_ids = validated_data.pop("skill_ids", [])
+    def update(self, instance, validated_data):
+        skills = validated_data.pop('skills', None)
+        if skills is not None:
+            instance.skills.set(skills)
 
-        if ApplicantProfile.objects.filter(user=user).exists():
-            raise serializers.ValidationError("Applicant profile already exists for this user.")
+        work_experiences = validated_data.pop('work_experiences', None)
+        if work_experiences is not None:
+            instance.work_experiences.set(work_experiences)
 
-        profile = ApplicantProfile.objects.create(user=user, **validated_data)
-        if skill_ids:
-            profile.skills.set(skill_ids)
-
-        return profile
-
-    def update(self, instance, validated_date):
-        skill_ids = validated_date.pop("skill_ids", [])
-
-        for attr, vallue in validated_date.items():
-            setattr(instance, attr, vallue)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
         instance.save()
-
-        if skill_ids is not None:
-            instance.skills.set(skill_ids)
-
         return instance
 
 
