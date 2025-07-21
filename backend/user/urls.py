@@ -6,13 +6,16 @@ from user.views import (
     ApplicantProfileViewSet,
     SkillViewSet,
     TitleViewSet,
-    WorkExperienceViewSet)
+    WorkExperienceViewSet,
+    UserViewSet
+)
 
 
 router = DefaultRouter()
 
 # Import your viewsets here
 router.register(r"v1/auth", AuthViewSet, basename="auth")
+router.register(r"v1/user", UserViewSet, basename="user")
 router.register(r"v1/employer-profile", EmployerProfileViewSet, basename="employer-profile")
 router.register(r"v1/applicant-profile", ApplicantProfileViewSet, basename="applicant-profile")
 router.register(r"v1/skills", SkillViewSet, basename="skills")

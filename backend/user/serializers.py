@@ -95,19 +95,6 @@ class UserUpdateSerializer(UserBaseSerializer):
         value = super().validate_password(value)
         return value
 
-    def validate_avatar(self, new_avatar_key):
-        """
-        Check if the new avatar key is in the list of user's avatar keys (upload was successful)
-        """
-        user = self.context["request"].user
-
-        if user.avatar == new_avatar_key:
-            return new_avatar_key
-
-        if new_avatar_key not in list_user_avatar_keys(user.pk):
-            raise serializers.ValidationError("Invalid avatar key.")
-        return new_avatar_key
-
     def update(self, instance, validated_data):
         if "new_password" in validated_data:
             new_password = validated_data.pop("new_password")
@@ -163,6 +150,8 @@ class ApplicantProfileReadSerializer(serializers.ModelSerializer):
             "description",
             "skills",
             "work_experiences",
+            "birth_date",
+            "address",
             "created_at",
             "updated_at",
         ]
@@ -191,6 +180,8 @@ class ApplicantProfileUpdateSerializer(serializers.ModelSerializer):
             "description",
             "skill_ids",
             "work_experience_ids",
+            "birth_date",
+            "address",
         ]
         extra_kwargs = {
             "phone_number": {"required": False, "allow_blank": True},
