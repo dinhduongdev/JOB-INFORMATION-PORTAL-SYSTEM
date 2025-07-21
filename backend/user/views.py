@@ -70,13 +70,13 @@ class AuthViewSet(viewsets.GenericViewSet):
 class SkillViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Skill.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [AllowAny()]
+    permission_classes = [AllowAny]
 
 
 class TitleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Title.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [AllowAny()]
+    permission_classes = [AllowAny]
 
 
 class ApplicantProfileViewSet(viewsets.ViewSet):

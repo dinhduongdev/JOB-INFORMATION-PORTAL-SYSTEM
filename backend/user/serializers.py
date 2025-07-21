@@ -150,7 +150,7 @@ class WorkExperienceShortSerializer(serializers.ModelSerializer):
 
 
 class ApplicantProfileReadSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user =  UserBaseSerializer(read_only=True)
     skills = SkillSerializer(many=True, read_only=True)
     work_experiences = WorkExperienceShortSerializer(many=True, read_only=True)
 
