@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import '../css/CreateCVPage.css';
+import  {useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   BsPerson, BsBriefcase, BsEnvelope, BsBell, BsGear, BsPencil, 
   BsPlusCircle, BsTelephone, BsCalendar, BsGenderAmbiguous, 
@@ -7,6 +9,8 @@ import {
 } from 'react-icons/bs';
 import { FiGrid, FiFileText, FiStar } from "react-icons/fi";
 import { Link } from 'react-router-dom';
+import { fetchApplicantProfile } from '../features/applicant-profile/applicantProfileActions'; // Điều chỉnh đường dẫn nếu cần
+import { fetchSkills, updateSkills } from '../features/skill/skillActions'; // Điều chỉnh đường dẫn nếu cần
 
 const sections = [
   { id: 'about', title: 'Giới thiệu bản thân', description: 'Giới thiệu điểm mạnh và số năm kinh nghiệm của bạn' },
@@ -97,36 +101,50 @@ const WorkExperienceModal = ({ section, onClose }) => {
   );
 };
 
+// Trong SkillsModal (trong CreateCVPage.jsx)
 const SkillsModal = ({ onClose }) => {
-  const [skills, setSkills] = useState([
-  ]);
+  const dispatch = useDispatch();
+  const { skills, status } = useSelector((state) => state.skill || { skills: [], status: 'idle' });
+  const { profile } = useSelector((state) => state.applicantProfile || { profile: null });
   const [currentSkill, setCurrentSkill] = useState('');
   const [currentYears, setCurrentYears] = useState('');
+  const [selectedSkills, setSelectedSkills] = useState(profile?.skill_ids || []);
+  const token = localStorage.getItem('token');
 
-  const availableSkills = ['JavaScript', 'React', 'Node.js', 'Python', 'Java', 'C#', 'SQL', 'ABAP', '.NET'];
-  const yearsOptions = Array.from({ length: 21 }, (_, i) => i); // 0 to 20 years
+  useEffect(() => {
+    if (token && status === 'idle') {
+      dispatch(fetchSkills(token));
+      
+    }
+  }, [dispatch, token, status]);
 
   const handleAddSkill = () => {
-    console.log("Adding skill:", currentSkill, "with years:", currentYears);
-    if (currentSkill && currentYears && !skills.find((s) => s.name === currentSkill)) {
-      setSkills([...skills, { name: currentSkill, years: parseInt(currentYears) }]);
+    if (currentSkill && !selectedSkills.includes(parseInt(currentSkill))) {
+      setSelectedSkills([...selectedSkills, parseInt(currentSkill)]);
       setCurrentSkill('');
       setCurrentYears('');
     }
   };
 
-  const removeSkill = (skillToRemove) => {
-    setSkills(skills.filter((skill) => skill.name !== skillToRemove.name));
+  const removeSkill = (skillId) => {
+    setSelectedSkills(selectedSkills.filter(id => id !== skillId));
   };
+
+  const handleSave = () => {
+    dispatch(updateSkills({ token, skillIds: selectedSkills })).then(() => {
+      onClose();
+    });
+  };
+
+  console.log('skills', skills);
+  
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content modal-lg" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h5>List skills ({skills.length}/20)</h5>
-          <button onClick={onClose} className="modal-close-btn">
-            <BsX />
-          </button>
+          <h5>List skills ({selectedSkills.length}/20)</h5>
+          <button onClick={onClose} className="modal-close-btn"><BsX /></button>
         </div>
         <div className="modal-body">
           <div className="row g-2 mb-3 align-items-end">
@@ -137,16 +155,12 @@ const SkillsModal = ({ onClose }) => {
                 value={currentSkill}
                 onChange={(e) => setCurrentSkill(e.target.value)}
               >
-                <option value="" disabled>
-                  Select a skill
-                </option>
-                {availableSkills
-                  .filter((s) => !skills.find((es) => es.name === s))
-                  .map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
+                <option value="" disabled>Select a skill</option>
+                {skills.map((skill) => (
+                  <option key={skill.id} value={skill.id} disabled={selectedSkills.includes(skill.id)}>
+                    {skill.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-sm-5">
@@ -156,58 +170,55 @@ const SkillsModal = ({ onClose }) => {
                 value={currentYears}
                 onChange={(e) => setCurrentYears(e.target.value)}
               >
-                <option value="" disabled>
-                  Select years
-                </option>
-                {yearsOptions.map((y) => (
-                  <option key={y} value={y}>
-                    {y} {y === 1 ? 'year' : 'years'}
-                  </option>
+                <option value="" disabled>Select years</option>
+                {Array.from({ length: 21 }, (_, i) => i).map((y) => (
+                  <option key={y} value={y}>{y} {y === 1 ? 'year' : 'years'}</option>
                 ))}
               </select>
             </div>
             <div className="col-sm-2">
-              <button className="btn btn-danger w-100" onClick={handleAddSkill}>
-                +
-              </button>
+              <button className="btn btn-danger w-100" onClick={handleAddSkill}>+</button>
             </div>
           </div>
           <div className="d-flex flex-wrap gap-2 border-top pt-3 min-vh-25">
-            {skills.length > 0 ? (
-              skills.map((skill) => (
-                <div key={skill.name} className="skill-tag">
-                  <span>
-                    {skill.name} ({skill.years} {skill.years === 1 ? 'year' : 'years'})
-                  </span>
-                  <button
-                    onClick={() => removeSkill(skill)}
-                    className="skill-tag-remove-btn"
-                  >
-                    <BsX size={16} />
-                  </button>
-                </div>
-              ))
+            {selectedSkills.length > 0 ? (
+              selectedSkills.map((skillId) => {
+                const skill = skills.find(s => s.id === skillId);
+                return (
+                  <div key={skillId} className="skill-tag">
+                    <span>{skill ? skill.name : `Skill ${skillId}`} ({currentYears || 0} {currentYears === 1 ? 'year' : 'years'})</span>
+                    <button onClick={() => removeSkill(skillId)} className="skill-tag-remove-btn"><BsX size={16} /></button>
+                  </div>
+                );
+              })
             ) : (
               <p className="text-muted w-100 text-center mt-4">No skills added yet.</p>
             )}
           </div>
         </div>
         <div className="modal-footer">
-          <button className="btn btn-cancel" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn-red" onClick={onClose}>
-            Save
-          </button>
+          <button className="btn btn-cancel" onClick={onClose}>Cancel</button>
+          <button className="btn btn-red" onClick={handleSave}>Save</button>
         </div>
       </div>
     </div>
   );
 };
 
+
 const CreateCVPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState(null);
+  const dispatch = useDispatch();
+  const { profile, status, error } = useSelector((state) => state.applicantProfile);
+
+  // Gọi API khi component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token'); // Giả sử token được lưu trong localStorage
+    if (token) {
+      dispatch(fetchApplicantProfile(token));
+    }
+  }, [dispatch]);
 
   const handleOpenModal = (section) => {
     const enabledSections = ['about', 'experience', 'skills'];
@@ -231,6 +242,17 @@ const CreateCVPage = () => {
       default: return null;
     }
   };
+
+  // Hiển thị dữ liệu từ profile nếu có
+  useEffect(() => {
+    if (status === 'succeeded' && profile) {
+      console.log('Applicant Profile:', profile);
+      // Cập nhật UI với dữ liệu từ profile nếu cần
+    }
+    if (status === 'failed' && error) {
+      console.error('Error fetching profile:', error);
+    }
+  }, [status, profile, error]);
 
   return (
     <>
@@ -259,17 +281,17 @@ const CreateCVPage = () => {
                     <img src="https://placehold.co/80x80/EFEFEF/333?text=PD" alt="Avatar" className="profile-avatar" />
                     <div className="flex-grow-1">
                       <div className="d-flex justify-content-between align-items-start">
-                        <h4 className="fw-bold mb-1">Phạm Đình Dương</h4>
+                        <h4 className="fw-bold mb-1">{profile?.data.user.full_name}</h4>
                         <button className="btn btn-light btn-sm"><BsPencil /></button>
                       </div>
                       <p className="text-muted">Cập nhật chức danh</p>
                       <div className="row">
-                        <div className="col-md-6"><div className="profile-details"><span><BsEnvelope/> duongxummo@gmail.co...</span></div></div>
-                        <div className="col-md-6"><div className="profile-details"><span><BsTelephone/> Số điện thoại</span></div></div>
-                        <div className="col-md-6"><div className="profile-details"><span><BsCalendar/> Ngày sinh</span></div></div>
-                        <div className="col-md-6"><div className="profile-details"><span><BsGenderAmbiguous/> Giới tính subtracted></span></div></div>
-                        <div className="col-md-6"><div className="profile-details"><span><BsGeoAlt/> Địa chỉ hiện tại</span></div></div>
-                        <div className="col-md-6"><div className="profile-details"><span><BsLink45Deg/> Link cá nhân</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsEnvelope/> {profile?.data.user.email || 'duongxummo@gmail.co...'}</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsTelephone/> {profile?.data.phone_number || 'Số điện thoại'}</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsCalendar/> {profile?.birthDate || 'Ngày sinh'}</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsGenderAmbiguous/> {profile?.gender || 'Giới tính'}</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsGeoAlt/> {profile?.address || 'Địa chỉ hiện tại'}</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsLink45Deg/> {profile?.personalLink || 'Link cá nhân'}</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -293,8 +315,8 @@ const CreateCVPage = () => {
               <div className="right-sidebar">
                 <div className="card">
                   <h5 className="fw-bold">Độ hoàn thiện hồ sơ</h5>
-                  <div className="progress-circle"><div className="progress-circle-inner">70%</div></div>
-                  <p className="text-muted">Nâng cấp hồ sơ của bạn lên <strong>70%</strong> để tối mẫu CV dành cho chuyên gia IT.</p>
+                  <div className="progress-circle"><div className="progress-circle-inner">{profile?.completionPercentage || '70%'}</div></div>
+                  <p className="text-muted">Nâng cấp hồ sơ của bạn lên <strong>{profile?.completionPercentage || '70%'}</strong> để tối mẫu CV dành cho chuyên gia IT.</p>
                   <ul className="completion-list">
                     <li><BsPlusCircle className="text-danger"/> Thêm Giới thiệu bản thân</li>
                     <li><BsPlusCircle className="text-danger"/> Thêm Thông tin cá nhân</li>
