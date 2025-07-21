@@ -14,7 +14,7 @@ const Hero = () => {
             90% lý do CV bị loại qua sớm vì trình bày chưa đúng cách, theo khảo sát ITviec - Đừng để bạn là người tiếp theo. Dùng ngay mẫu CV được chính nhà tuyển dụng IT đề xuất và được hàng ngàn nhân sự IT sử dụng.
           </p>
           <div className="d-flex justify-content-center gap-3 mt-5">
-            <Link to="/create-cv" className="btn btn-lg px-5 btn-custom-primary text-decoration-none">
+            <Link to="/profile-cv/cv-templates" className="btn btn-lg px-5 btn-custom-primary text-decoration-none">
               Tạo CV ngay
             </Link>
             <button className="btn btn-lg px-5 btn-custom-outline">
