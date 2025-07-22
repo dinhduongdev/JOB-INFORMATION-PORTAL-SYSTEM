@@ -8,14 +8,14 @@ ALLOWED_AVATAR_EXTENSIONS = [
     ".svg",
 ]
 
-ALLOWED_DOCUMENT_EXTENSIONS = [
+ALLOWED_DOCUMENT_EXTENSIONS = (
     ".pdf",
     ".docx",
     ".txt",
     ".jpg",
     ".jpeg",
     ".png",
-]
+)
 
 AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 DOCUMENT_MAX_SIZE = 50 * 1024 * 1024  # 50 MB
@@ -30,5 +30,5 @@ BUCKET_NAME = getenv("BUCKET_NAME")
 # Prefixes for organizing content
 AVATARS_PATH = "/"
 AVATARS_DEFAULT_AVATARS_PATH = "default/"
-DOCUMENTS_PATH = "doctor_documents/"
+DOCUMENTS_PATH = "documents/"
 STATIC_PATH = "static/"
