@@ -417,7 +417,7 @@ const CreateCVPage = () => {
                 <ul className="nav flex-column">
                   <li className="nav-item"><a className="nav-link" href="#"><BsPerson /> Xin chào <br/><strong>Phạm Đình Dương</strong></a></li>
                   <li className="nav-item"><a className="nav-link" href="#"><FiGrid /> Tổng quan</a></li>
-                  <li className="nav-item"><a className="nav-link" href="#"><FiFileText /> Hồ sơ đính kèm</a></li>
+                  <Link to="/profile-cv/stored" className="nav-item"><a className="nav-link" href="#"><FiFileText /> Hồ sơ của tôi</a></Link>
                   <li className="nav-item"><a className="nav-link active" href="#"><FiStar /> Hồ sơ ITviec</a></li>
                   <li className="nav-item"><a className="nav-link" href="#"><BsBriefcase /> Việc làm của tôi</a></li>
                   <li className="nav-item"><a className="nav-link" href="#"><BsEnvelope /> Lời mời công việc</a></li>
@@ -487,6 +487,7 @@ const CreateCVPage = () => {
                     <li><BsChevronDown /> Thêm thông tin khác</li>
                   </ul>
                   <Link to="/profile-cv/cv-templates" className="btn btn-red mt-3">Xem và Tải CV</Link>
+                  <Link to="/profile-cv/stored" className="btn btn-red mt-3">Đăng tải CV</Link>
                 </div>
               </div>
             </div>
