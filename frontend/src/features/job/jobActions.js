@@ -3,15 +3,19 @@ import { endpoints, authApis } from '../../configs/apis';
 
 export const fetchJobs = createAsyncThunk(
   'job/fetchJobs',
-  async ({ token, search = '' }, { rejectWithValue }) => {
+  async ({ token, search = '', salaryMin = null, salaryMax = null, currency = 'USD' }, { rejectWithValue }) => {
     try {
       const api = authApis(token);
-      // Build the URL with the search query parameter if provided
-      const url = search
-        ? `${endpoints.jobSearch || '/api/v1/job-posts/'}?search=${encodeURIComponent(search)}`
-        : endpoints.jobSearch || '/api/v1/job-posts/';
+      const params = new URLSearchParams();
+      if (search) params.append('search', (search));
+      if (salaryMin !== null && salaryMax !== null && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax)) {
+        params.append('salary_currency', currency);
+        params.append('salary_amount_gte', parseInt(salaryMin));
+        params.append('salary_amount_lte', parseInt(salaryMax));
+      }
+      const url = `${endpoints.jobSearch || '/api/v1/job-posts/'}?${params.toString()}`;
       const response = await api.get(url);
-      return response.data.results; // Return the results array from the API
+      return response.data.results;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }

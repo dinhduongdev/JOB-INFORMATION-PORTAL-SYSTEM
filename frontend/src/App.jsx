@@ -9,6 +9,7 @@ import CVPage from "./pages/CVPage";
 import CreateCVPage from "./pages/CreateCVPage";
 import CVTemplatesPage from "./pages/CVTemplatesPage";
 import JobSearchPage from "./pages/JobSearchPage";
+import StoredCv from "./pages/StoredCv";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <Route path="/profile-cv">
           <Route index element={<CreateCVPage />} />
           <Route path="cv-templates" element={<CVTemplatesPage />} />
+          <Route path="stored" element={<StoredCv />} />
         </Route>
 
         <Route path="/job-search" element={<JobSearchPage />} />

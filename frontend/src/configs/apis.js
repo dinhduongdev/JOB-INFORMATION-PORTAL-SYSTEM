@@ -1,5 +1,6 @@
 
 import axios from "axios";
+import StoredCv from "../pages/StoredCv";
 
 const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -11,6 +12,7 @@ export const endpoints = {
     skills: "/api/v1/skills/",
     jobTitle: "/api/v1/titles/",
     workExperience: "/api/v1/work-experience/",
+    "storedCv" : (applicant_id) => `/api/v1/${applicant_id}/cv/`,
 }
 
 export const authApis = (token) => {
