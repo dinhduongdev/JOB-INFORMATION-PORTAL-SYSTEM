@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { endpoints, authApis } from "../../configs/Apis";
+import { endpoints, authApis } from "../../configs/apis";
 
 export const fetchApplicantProfile = createAsyncThunk(
   'applicantProfile/fetchApplicantProfile',
