@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import json
 from os import getenv
 from pathlib import Path
 
@@ -102,6 +102,10 @@ DATABASES = {
         "PASSWORD": getenv("DB_PASSWORD"),
         "HOST": getenv("DB_HOST"),
         "PORT": getenv("DB_PORT"),
+        "OPTIONS": {
+            "sslmode": getenv("DB_SSLMODE", "disable"),
+            "channel_binding": getenv("DB_CHANNEL_BINDING", "disable"),
+        },
     },
 }
 
