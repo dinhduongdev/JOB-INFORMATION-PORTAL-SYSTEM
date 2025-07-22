@@ -4,7 +4,7 @@ import applicantProfileReducer from '../features/applicant-profile/applicantProf
 import skillReducer from '../features/skill/skillSlice'; 
 import jobTitleReducer from '../features/job-title/jobTitleSlice';
 import workExperienceReducer from '../features/work-experience/workExperienceSlice'
-
+import jobReducer from '../features/job/jobSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +13,7 @@ export const store = configureStore({
     skill: skillReducer,
     jobTitle: jobTitleReducer,
     workExperience: workExperienceReducer,
+    job: jobReducer,
   },
 });
 
