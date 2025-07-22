@@ -10,21 +10,32 @@ const JobSearchPage = () => {
   const { jobs, status } = useSelector((state) => state.job || { jobs: [], status: 'idle' });
   const [selectedJob, setSelectedJob] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || 'javascript');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [salaryMin, setSalaryMin] = useState(searchParams.get('salary_amount_gte') || '');
+  const [salaryMax, setSalaryMax] = useState(searchParams.get('salary_amount_lte') || '');
+  const [currency, setCurrency] = useState(searchParams.get('salary_currency') || 'USD');
 
-  // Update search term when URL changes
+  // Update state when URL changes
   useEffect(() => {
-    const search = searchParams.get('search') || 'javascript';
+    const search = searchParams.get('search') || '';
+    const min = searchParams.get('salary_amount_gte') || '';
+    const max = searchParams.get('salary_amount_lte') || '';
+    const curr = searchParams.get('salary_currency') || 'USD';
     setSearchTerm(search);
+    setSalaryMin(min);
+    setSalaryMax(max);
+    setCurrency(curr);
   }, [searchParams]);
 
-  // Fetch jobs when searchTerm or status changes
+  // Fetch jobs when searchTerm, salary, or currency changes
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token && status === 'idle') {
-      dispatch(fetchJobs({ token, search: searchTerm }));
+      const min = salaryMin ? parseInt(salaryMin) : null;
+      const max = salaryMax ? parseInt(salaryMax) : null;
+      dispatch(fetchJobs({ token, search: searchTerm, salaryMin: min, salaryMax: max, currency }));
     }
-  }, [dispatch, status, searchTerm]);
+  }, [dispatch, status, searchTerm, salaryMin, salaryMax, currency]);
 
   // Set the first job as selected when jobs load
   useEffect(() => {
@@ -38,8 +49,28 @@ const JobSearchPage = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     if (token) {
-      setSearchParams({ search: searchTerm });
-      dispatch(fetchJobs({ token, search: searchTerm }));
+      const params = new URLSearchParams();
+      params.append('search', searchTerm);
+      if (salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax)) {
+        params.append('salary_currency', currency);
+        params.append('salary_amount_gte', parseInt(salaryMin));
+        params.append('salary_amount_lte', parseInt(salaryMax));
+      }
+      setSearchParams(params);
+      dispatch(fetchJobs({ token, search: searchTerm, salaryMin: salaryMin ? parseInt(salaryMin) : null, salaryMax: salaryMax ? parseInt(salaryMax) : null, currency }));
+    }
+  };
+
+  // Handle clearing salary filter
+  const handleClearSalaryFilter = () => {
+    setSalaryMin('');
+    setSalaryMax('');
+    const params = new URLSearchParams();
+    params.append('search', searchTerm);
+    setSearchParams(params);
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(fetchJobs({ token, search: searchTerm, salaryMin: null, salaryMax: null, currency: 'USD' }));
     }
   };
 
@@ -63,25 +94,58 @@ const JobSearchPage = () => {
                 placeholder="Tên công việc, vị trí, công ty..."
               />
             </div>
-            <button type="submit" className="btn btn-red btn-search">
+            <button
+              type="submit"
+              className="btn btn-red btn-search"
+              style={{ width: '200px' }}
+            >
               <BsSearch className="me-2" /> Tìm kiếm
             </button>
           </form>
+          <div className="mt-3 text-white d-flex align-items-center">
+            <label className="me-2">Mức lương:</label>
+            <select
+              className="form-select form-select-sm d-inline-block w-auto me-2"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              <option value="USD">USD</option>
+              <option value="VND">VND</option>
+            </select>
+            <input
+              type="number"
+              className="form-control form-control-sm d-inline-block w-auto me-2"
+              placeholder="Tối thiểu"
+              value={salaryMin}
+              onChange={(e) => setSalaryMin(e.target.value)}
+              min="0"
+            />
+            <input
+              type="number"
+              className="form-control form-control-sm d-inline-block w-auto me-2"
+              placeholder="Tối đa"
+              value={salaryMax}
+              onChange={(e) => setSalaryMax(e.target.value)}
+              min="0"
+            />
+            <span className="ms-2 me-2">
+              {salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax)
+                ? `${parseInt(salaryMin).toLocaleString()} - ${parseInt(salaryMax).toLocaleString()} ${currency}`
+                : 'Không áp dụng'}
+            </span>
+            {salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax) && (
+              <button
+                className="btn btn-outline-light btn-sm"
+                onClick={handleClearSalaryFilter}
+              >
+                Hủy áp dụng lọc theo lương
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <main className="container mt-4">
-        <div className="results-header">
-          <h4 className="fw-bold">{jobs.length} việc làm tại Việt Nam</h4>
-          <div className="filters">
-            <button className="btn btn-filter">Cấp bậc <BsChevronDown /></button>
-            <button className="btn btn-filter">Hình thức làm việc <BsChevronDown /></button>
-            <button className="btn btn-filter">Mức lương <BsChevronDown /></button>
-            <button className="btn btn-filter">Loại hình công việc <BsChevronDown /></button>
-            <button className="btn btn-outline-secondary">Bộ lọc</button>
-          </div>
-        </div>
-
         <div className="row">
           <div className="col-lg-5">
             <div className="job-list">

@@ -5,13 +5,23 @@ import { IoSearch, IoLocationOutline } from 'react-icons/io5';
 const SearchSection = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [salaryMin, setSalaryMin] = useState('');
+  const [salaryMax, setSalaryMax] = useState('');
+  const [currency, setCurrency] = useState('USD');
   const popularSearches = ['Java', 'ReactJS', '.NET', 'Tester', 'PHP', 'Business Analysis', 'NodeJS', 'Team Management'];
 
   // Handle form submission
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/job-search?search=${encodeURIComponent(searchTerm)}`);
+      const params = new URLSearchParams();
+      params.append('search', (searchTerm));
+      if (salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax)) {
+        params.append('salaryMin', parseInt(salaryMin));
+        params.append('salaryMax', parseInt(salaryMax));
+        params.append('currency', currency);
+      }
+      navigate(`/job-search?${params.toString()}`);
     }
   };
 
@@ -44,6 +54,9 @@ const SearchSection = () => {
             Tìm Kiếm
           </button>
         </form>
+
+        {/* Salary Range and Currency */}
+        
 
         {/* Popular Searches */}
         <div className="d-flex align-items-center justify-content-center flex-wrap mt-3">
