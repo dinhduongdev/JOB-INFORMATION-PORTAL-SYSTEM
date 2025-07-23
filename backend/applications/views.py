@@ -14,6 +14,7 @@ class CVViewSet(
     mixins.DestroyModelMixin,
 ):
     serializer_class = CVSerializer
+    pagination_class = None  
 
     def get_queryset(self):
         applicant_id = self.kwargs.get("applicant_id")

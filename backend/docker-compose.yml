@@ -212,3 +212,11 @@ services:
         condition: service_healthy
       jobsite-rabbitmq:
         condition: service_healthy
+
+  jobsite-test:
+    <<: *backend-service
+    command: ["python", "manage.py", "test", "jobs"]
+    depends_on:
+      jobsite-db:
+        condition: service_healthy
+

@@ -8,7 +8,7 @@ class CV(models.Model):
     applicant = models.ForeignKey(
         ApplicantProfile, on_delete=models.CASCADE, related_name="cvs"
     )
-    link = models.URLField(max_length=200, blank=False, null=False)
+    link = models.URLField(max_length=200, blank=False, null=False, default="https://example.com")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
