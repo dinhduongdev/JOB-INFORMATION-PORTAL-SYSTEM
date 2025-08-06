@@ -129,6 +129,7 @@ class JobPostReadSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True)
     employer = EmployerProfileSerializer()
     salary = SalarySerializer()
+    application_count = serializers.SerializerMethodField()
 
     class Meta:
         model = JobPost
@@ -146,5 +147,9 @@ class JobPostReadSerializer(serializers.ModelSerializer):
             'created_at',
             'due_date',
             'is_active',
+            "application_count",
         ]
         read_only_fields = fields
+
+    def get_application_count(self, obj):
+        return obj.applications.count()

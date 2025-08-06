@@ -1,9 +1,15 @@
+from time import timezone
+
 from rest_framework import serializers
 from django.conf import settings
+
+from jobs.models import JobPost
+from jobs.serializers import JobPostReadSerializer
 from proxies.s3.document import generate_document_key, upload_document
 from proxies.s3.settings import ALLOWED_DOCUMENT_EXTENSIONS, DOCUMENT_MAX_SIZE
+from user.serializers import ApplicantProfileReadSerializer
 
-from .models import CV
+from .models import CV, Application
 
 
 class CurrentApplicantProfile:
@@ -51,3 +57,80 @@ class CVSerializer(serializers.ModelSerializer):
             file_content=file.read(),
         )
         return CV.objects.create(**validated_data)
+
+
+class ApplicationCreateSerializer(serializers.ModelSerializer):
+    cover_letter = serializers.CharField(required=False, allow_blank=True)
+    cv = serializers.PrimaryKeyRelatedField(
+        queryset=CV.objects.all(), required=False, allow_null=True
+    )
+    job_post = serializers.PrimaryKeyRelatedField(
+        queryset=JobPost.objects.filter(is_active=True)
+    )
+
+    class Meta:
+        model = Application
+        fields = [
+            "job_post",
+            "cover_letter",
+            "cv",
+        ]
+
+    def validate_job_post(self, job_post):
+        # Không apply vào job đã quá hạn hoặc không active
+        if not job_post.is_active:
+            raise serializers.ValidationError("Cannot apply to an inactive job post.")
+        if job_post.due_date < timezone.now():
+            raise serializers.ValidationError("Cannot apply to a job post past its due date.")
+        return job_post
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not hasattr(user, "applicant_profile"):
+            raise serializers.ValidationError("Authenticated user is not an applicant.")
+        # Unique constraint sẽ bị bắt ở save nếu trùng, nhưng có thể kiểm tra trước:
+        applicant_profile = user.applicant_profile
+        job_post = attrs["job_post"]
+        if Application.objects.filter(applicant=applicant_profile, job_post=job_post).exists():
+            raise serializers.ValidationError("You have already applied to this job post.")
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        applicant_profile = user.applicant_profile
+        return Application.objects.create(
+            applicant=applicant_profile,
+            **validated_data
+        )
+
+
+class ApplicationReadSerializer(serializers.ModelSerializer):
+    job_post = JobPostReadSerializer(read_only=True)
+    cv = CVSerializer(read_only=True)
+    applied_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = [
+            "id",
+            "job_post",
+            "cover_letter",
+            "cv",
+            "applied_at",
+        ]
+
+class ApplicationWithApplicantSerializer(serializers.ModelSerializer):
+    applicant = ApplicantProfileReadSerializer(read_only=True)
+    cv = CVSerializer(read_only=True)
+    applied_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = [
+            "id",
+            "applicant",
+            "cover_letter",
+            "cv",
+            "applied_at",
+        ]
+
