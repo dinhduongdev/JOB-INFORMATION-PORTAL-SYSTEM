@@ -1,4 +1,4 @@
-import Apis, { endpoints } from "../../configs/Apis";
+import Apis, { endpoints } from "../../configs/apis";
 const clientId = import.meta.env.VITE_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_CLIENT_SECRET;
 
