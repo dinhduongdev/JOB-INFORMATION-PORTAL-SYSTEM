@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from .settings import EDIT_APPLICATION_CUTOFF_MINUTES
 
 
 class IsApplicant(permissions.BasePermission):

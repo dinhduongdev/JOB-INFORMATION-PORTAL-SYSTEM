@@ -1,14 +1,24 @@
-from rest_framework import mixins, viewsets, status
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from jobs.models import JobPost
+from proxies.s3.utils import delete_object
+from user.permissions import IsAdminOrOwnerEmployer, IsApplicant
+
 from .models import CV, Application
-from .permissions import HasApplicantProfile, IsApplicant, OwnerOfApplicantProfilePath
-from .serializers import CVSerializer, ApplicationReadSerializer, ApplicationWithApplicantSerializer
-from user.permissions import IsApplicant, IsAdminOrOwnerEmployer
+from .permissions import (
+    HasApplicantProfile,
+    OwnerOfApplicantProfilePath,
+)
+from .serializers import (
+    ApplicationWriteSerializer,
+    ApplicationReadSerializer,
+    CVSerializer,
+)
+from .filters import ApplicationFilter
 
 
 class CVViewSet(
@@ -26,50 +36,71 @@ class CVViewSet(
 
     def get_permissions(self):
         PERMISSION_MAP = {
-            "create": [IsAuthenticated, IsApplicant, HasApplicantProfile, OwnerOfApplicantProfilePath],
-            "list": [IsAuthenticated, IsApplicant, HasApplicantProfile, OwnerOfApplicantProfilePath],
+            "create": [
+                IsAuthenticated,
+                IsApplicant,
+                HasApplicantProfile,
+                OwnerOfApplicantProfilePath,
+            ],
+            "list": [
+                IsAuthenticated,
+                IsApplicant,
+                HasApplicantProfile,
+                OwnerOfApplicantProfilePath,
+            ],
             "retrieve": [IsAuthenticated],
-            "destroy": [IsAuthenticated, IsApplicant, HasApplicantProfile, OwnerOfApplicantProfilePath],
+            "destroy": [
+                IsAuthenticated,
+                IsApplicant,
+                HasApplicantProfile,
+                OwnerOfApplicantProfilePath,
+            ],
         }
         permissions = PERMISSION_MAP.get(self.action)
         return [permission() for permission in permissions]
 
+    def perform_destroy(self, instance):
+        delete_object(instance.link)
+        return super().perform_destroy(instance)
+
 
 class ApplicationViewSet(viewsets.ModelViewSet):
-    queryset = Application.objects.all()
+    filterset_class = ApplicationFilter
+    ordering_fields = ["applied_at"]
 
-    def get_serializer(self, *args, **kwargs):
-        if self.action in ['by_job']:
-            return ApplicationWithApplicantSerializer(*args, **kwargs)
-        elif self.action in ['my_applications']:
-            return ApplicationReadSerializer(*args, **kwargs)
-        return super().get_serializer(*args, **kwargs)
+    def get_queryset(self):
+        base = Application.objects.all().select_related(
+            "job_post", "applicant", "cv", "job_post__employer"
+        )
+
+        user = self.request.user
+        if user.is_staff or user.is_superuser or user.is_admin:
+            return base
+
+        if user.is_applicant:
+            return base.filter(applicant=user.applicant_profile)
+
+        if user.is_employer:
+            return base.filter(job_post__employer=user.employer_profile)
+
+        return base.none()
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return ApplicationReadSerializer
+        return ApplicationWriteSerializer
 
     def get_permissions(self):
-        if self.action in ['my_applications']:
-            return [IsApplicant()]
-        elif self.action in ['by_job']:
-            return [IsAdminOrOwnerEmployer()]
-        else:
-            return [IsAuthenticated]
+        BASE_PERMISSIONS = [IsAuthenticated]
+        PERMISSION_MAP = {
+            "list": [],
+            "retrieve": [],
+            "create": [IsApplicant],
+            "update": [IsApplicant],
+            "partial_update": [IsApplicant],
+            "destroy": [IsApplicant],
+        }
 
-    @action(detail=False, methods=["get"], url_path='my-applications')
-    def my_applications(self, request):
-        user = request.user
-
-        applications = self.queryset.filter(applicant=user.applicant_profile).select_related("job_post")
-        serializer = self.get_serializer(applications, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'], url_path='by_job/(?P<job_id>[^/.]+)')
-    def by_job(self, request, job_id=None):
-        """
-        GET /api/applications/by_job/{job_id}/
-        Trả về danh sách các ứng cử viên đã apply vào job có id là job_id
-        """
-        job = get_object_or_404(JobPost, id=job_id)
-
-        applications = self.queryset.filter(job_post=job)
-
-        serializer = self.get_serializer(applications, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Default to owner permissions
+        permission_classes = BASE_PERMISSIONS + PERMISSION_MAP.get(self.action)
+        return [permission() for permission in permission_classes]
