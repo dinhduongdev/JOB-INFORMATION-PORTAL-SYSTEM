@@ -28,5 +28,5 @@ class ApplicationFilter(FilterSet):
         fields = {
             "job_post": ["exact"],
             "applicant": ["exact"],
-            "created_at": ["exact", "lt", "gt"],
+            "applied_at": ["exact", "lt", "gt"],
         }
