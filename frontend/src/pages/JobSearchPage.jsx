@@ -2,77 +2,93 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import '../css/JobSearchPage.css';
-import { BsSearch, BsGeoAlt, BsHeart, BsChevronDown, BsBookmarkFill } from 'react-icons/bs';
+import { BsSearch, BsGeoAlt, BsHeart, BsBookmarkFill } from 'react-icons/bs';
 import { fetchJobs } from '../features/job/jobActions';
+import Pagination from '../components/Pagination'; // Import component Pagination
 
 const JobSearchPage = () => {
   const dispatch = useDispatch();
-  const { jobs, status } = useSelector((state) => state.job || { jobs: [], status: 'idle' });
+  const { jobs, status } = useSelector((state) => state.job || { jobs: { count: 0, results: [] }, status: 'idle' });
   const [selectedJob, setSelectedJob] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Lấy các tham số từ URL
+  const currentPage = parseInt(searchParams.get('page') || '1');
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [salaryMin, setSalaryMin] = useState(searchParams.get('salary_amount_gte') || '');
   const [salaryMax, setSalaryMax] = useState(searchParams.get('salary_amount_lte') || '');
   const [currency, setCurrency] = useState(searchParams.get('salary_currency') || 'USD');
 
-  // Update state when URL changes
+  // Cập nhật state của các ô input khi URL thay đổi (ví dụ: khi nhấn nút back/forward)
   useEffect(() => {
-    const search = searchParams.get('search') || '';
-    const min = searchParams.get('salary_amount_gte') || '';
-    const max = searchParams.get('salary_amount_lte') || '';
-    const curr = searchParams.get('salary_currency') || 'USD';
-    setSearchTerm(search);
-    setSalaryMin(min);
-    setSalaryMax(max);
-    setCurrency(curr);
+    setSearchTerm(searchParams.get('search') || '');
+    setSalaryMin(searchParams.get('salary_amount_gte') || '');
+    setSalaryMax(searchParams.get('salary_amount_lte') || '');
+    setCurrency(searchParams.get('salary_currency') || 'USD');
   }, [searchParams]);
 
-  // Fetch jobs when searchTerm, salary, or currency changes
+  // Fetch dữ liệu jobs khi bất kỳ tham số nào trên URL thay đổi
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token && status === 'idle') {
-      const min = salaryMin ? parseInt(salaryMin) : null;
-      const max = salaryMax ? parseInt(salaryMax) : null;
-      dispatch(fetchJobs({ token, search: searchTerm, salaryMin: min, salaryMax: max, currency }));
+    if (token) {
+      dispatch(fetchJobs({ 
+        token, 
+        page: currentPage, 
+        search: searchTerm, 
+        salaryMin: salaryMin ? parseInt(salaryMin) : null, 
+        salaryMax: salaryMax ? parseInt(salaryMax) : null, 
+        currency 
+      }));
     }
-  }, [dispatch, status, searchTerm, salaryMin, salaryMax, currency]);
+  }, [dispatch, searchTerm, salaryMin, salaryMax, currency, currentPage]);
 
-  // Set the first job as selected when jobs load
+  // Tự động chọn job đầu tiên trong danh sách khi dữ liệu được tải
   useEffect(() => {
-    if (jobs.length > 0 && !selectedJob) {
-      setSelectedJob(jobs[0]);
+    if (jobs.results && jobs.results.length > 0) {
+      if (!selectedJob || !jobs.results.find(j => j.id === selectedJob.id)) {
+        setSelectedJob(jobs.results[0]);
+      }
+    } else {
+      setSelectedJob(null);
     }
   }, [jobs, selectedJob]);
 
-  // Handle search input change and update URL
+  // Xử lý khi người dùng nhấn nút tìm kiếm
   const handleSearch = (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    if (token) {
-      const params = new URLSearchParams();
-      params.append('search', searchTerm);
-      if (salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax)) {
-        params.append('salary_currency', currency);
-        params.append('salary_amount_gte', parseInt(salaryMin));
-        params.append('salary_amount_lte', parseInt(salaryMax));
-      }
-      setSearchParams(params);
-      dispatch(fetchJobs({ token, search: searchTerm, salaryMin: salaryMin ? parseInt(salaryMin) : null, salaryMax: salaryMax ? parseInt(salaryMax) : null, currency }));
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (salaryMin && salaryMax) {
+      params.set('salary_currency', currency);
+      params.set('salary_amount_gte', salaryMin);
+      params.set('salary_amount_lte', salaryMax);
+    }
+    params.set('page', '1'); // Luôn reset về trang 1 khi thực hiện tìm kiếm mới
+    setSearchParams(params);
+  };
+
+  // Xử lý khi người dùng chuyển trang
+  const handlePageChange = (newPage) => {
+    if (newPage > 0) {
+        const params = new URLSearchParams(searchParams);
+        params.set('page', newPage);
+        setSearchParams(params);
+        window.scrollTo(0, 0); // Cuộn lên đầu trang
     }
   };
 
-  // Handle clearing salary filter
+  // Xử lý xóa bộ lọc lương
   const handleClearSalaryFilter = () => {
-    setSalaryMin('');
-    setSalaryMax('');
-    const params = new URLSearchParams();
-    params.append('search', searchTerm);
+    const params = new URLSearchParams(searchParams);
+    params.delete('salary_currency');
+    params.delete('salary_amount_gte');
+    params.delete('salary_amount_lte');
     setSearchParams(params);
-    const token = localStorage.getItem('token');
-    if (token) {
-      dispatch(fetchJobs({ token, search: searchTerm, salaryMin: null, salaryMax: null, currency: 'USD' }));
-    }
   };
+
+  // Tính toán tổng số trang
+  const itemsPerPage = 2; // Giả sử API trả về 2 item mỗi trang
+  const totalPages = Math.ceil((jobs?.count || 0) / itemsPerPage);
 
   return (
     <div className="job-search-page">
@@ -102,7 +118,7 @@ const JobSearchPage = () => {
               <BsSearch className="me-2" /> Tìm kiếm
             </button>
           </form>
-          <div className="mt-3 text-white d-flex align-items-center">
+          <div className="mt-3 text-white d-flex align-items-center flex-wrap">
             <label className="me-2">Mức lương:</label>
             <select
               className="form-select form-select-sm d-inline-block w-auto me-2"
@@ -128,17 +144,13 @@ const JobSearchPage = () => {
               onChange={(e) => setSalaryMax(e.target.value)}
               min="0"
             />
-            <span className="ms-2 me-2">
-              {salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax)
-                ? `${parseInt(salaryMin).toLocaleString()} - ${parseInt(salaryMax).toLocaleString()} ${currency}`
-                : 'Không áp dụng'}
-            </span>
-            {salaryMin && salaryMax && !isNaN(salaryMin) && !isNaN(salaryMax) && parseInt(salaryMin) < parseInt(salaryMax) && (
+            {salaryMin && salaryMax && (
               <button
+                type="button"
                 className="btn btn-outline-light btn-sm"
                 onClick={handleClearSalaryFilter}
               >
-                Hủy áp dụng lọc theo lương
+                Hủy lọc lương
               </button>
             )}
           </div>
@@ -149,7 +161,8 @@ const JobSearchPage = () => {
         <div className="row">
           <div className="col-lg-5">
             <div className="job-list">
-              {jobs.map((job) => (
+              {status === 'loading' && <p>Đang tải...</p>}
+              {status === 'succeeded' && jobs.results.map((job) => (
                 <div
                   key={job.id}
                   className={`job-card ${selectedJob?.id === job.id ? 'active' : ''}`}
@@ -170,7 +183,7 @@ const JobSearchPage = () => {
                   <div className="badge-love">
                     <BsBookmarkFill /> {job.salary?.display_text || "You'll love it"}
                   </div>
-                  <p className="salary-small">{job.salary?.display_text || 'Negotiable'}</p>
+                  <p className="salary-small">{job.salary?.display_text || 'Thỏa thuận'}</p>
                   <div className="skills-small">
                     {job.skills.map((skill) => (
                       <span key={skill.id} className="skill-tag">
@@ -181,6 +194,15 @@ const JobSearchPage = () => {
                 </div>
               ))}
             </div>
+
+            <div className="mt-4">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+            
           </div>
           <div className="col-lg-7">
             {selectedJob && (
@@ -203,37 +225,13 @@ const JobSearchPage = () => {
                   </button>
                 </div>
                 <hr />
-                <p>
-                  <strong>Địa điểm:</strong> {selectedJob.location}
-                </p>
-                <p>
-                  <strong>Đăng vào:</strong>{' '}
-                  {new Date(selectedJob.created_at).toLocaleDateString('vi-VN', {
-                    day: 'numeric',
-                    month: 'numeric',
-                    year: 'numeric',
-                  })}
-                </p>
-                <p>
-                  <strong>Hạn nộp:</strong>{' '}
-                  {new Date(selectedJob.due_date).toLocaleDateString('vi-VN', {
-                    day: 'numeric',
-                    month: 'numeric',
-                    year: 'numeric',
-                  })}
-                </p>
-                <p>
-                  <strong>Yêu cầu:</strong> {selectedJob.requirements}
-                </p>
-                <p>
-                  <strong>Mô tả:</strong> {selectedJob.description}
-                </p>
-                <p>
-                  <strong>Mức lương:</strong> {selectedJob.salary?.display_text || 'Negotiable'}
-                </p>
-                <p>
-                  <strong>Kỹ năng:</strong>
-                </p>
+                <p><strong>Địa điểm:</strong> {selectedJob.location}</p>
+                <p><strong>Đăng vào:</strong> {new Date(selectedJob.created_at).toLocaleDateString('vi-VN')}</p>
+                <p><strong>Hạn nộp:</strong> {new Date(selectedJob.due_date).toLocaleDateString('vi-VN')}</p>
+                <p><strong>Yêu cầu:</strong> {selectedJob.requirements}</p>
+                <p><strong>Mô tả:</strong> {selectedJob.description}</p>
+                <p><strong>Mức lương:</strong> {selectedJob.salary?.display_text || 'Thỏa thuận'}</p>
+                <p><strong>Kỹ năng:</strong></p>
                 <div className="skills-large">
                   {selectedJob.skills.map((skill) => (
                     <span key={skill.id} className="skill-tag">

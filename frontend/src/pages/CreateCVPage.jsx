@@ -407,6 +407,9 @@ const CreateCVPage = () => {
     }
   };
 
+  console.log("profile", profile);
+  
+
   return (
     <>
       <div className="cv-page-body">
@@ -415,7 +418,7 @@ const CreateCVPage = () => {
             <div className="col-lg-2">
               <div className="left-sidebar">
                 <ul className="nav flex-column">
-                  <li className="nav-item"><a className="nav-link" href="#"><BsPerson /> Xin chào <br/><strong>Phạm Đình Dương</strong></a></li>
+                  <li className="nav-item"><a className="nav-link" href="#"><BsPerson /> Xin chào <br/><strong>{profile?.data?.user?.full_name || "..."}</strong></a></li>
                   <li className="nav-item"><a className="nav-link" href="#"><FiGrid /> Tổng quan</a></li>
                   <Link to="/profile-cv/stored" className="nav-item"><a className="nav-link" href="#"><FiFileText /> Hồ sơ của tôi</a></Link>
                   <li className="nav-item"><a className="nav-link active" href="#"><FiStar /> Hồ sơ ITviec</a></li>
@@ -434,15 +437,14 @@ const CreateCVPage = () => {
                     <img src="https://placehold.co/80x80/EFEFEF/333?text=PD" alt="Avatar" className="profile-avatar" />
                     <div className="flex-grow-1">
                       <div className="d-flex justify-content-between align-items-start">
-                        <h4 className="fw-bold mb-1">Phạm Đình Dương</h4>
+                        <h4 className="fw-bold mb-1">{profile?.data?.user?.full_name || "..."}</h4>
                         <button className="btn btn-light btn-sm"><BsPencil /></button>
                       </div>
                       <p className="text-muted">Cập nhật chức danh</p>
                       <div className="row">
-                        <div className="col-md-6"><div className="profile-details"><span><BsEnvelope/> {profile?.data?.email || 'duongxummo@gmail.co...'}</span></div></div>
+                        <div className="col-md-6"><div className="profile-details"><span><BsEnvelope/> {profile?.data?.user.email || 'duongxummo@gmail.co...'}</span></div></div>
                         <div className="col-md-6"><div className="profile-details"><span><BsTelephone/> {profile?.data?.phone_number || 'Số điện thoại'}</span></div></div>
                         <div className="col-md-6"><div className="profile-details"><span><BsCalendar/> {profile?.data?.birth_date || 'Ngày sinh'}</span></div></div>
-                        <div className="col-md-6"><div className="profile-details"><span><BsGenderAmbiguous/> {profile?.data?.gender || 'Giới tính'}</span></div></div>
                         <div className="col-md-6"><div className="profile-details"><span><BsGeoAlt/> {profile?.data?.address || 'Địa chỉ hiện tại'}</span></div></div>
                         <div className="col-md-6"><div className="profile-details"><span><BsLink45Deg/> {profile?.data?.personalLink || 'Link cá nhân'}</span></div></div>
                       </div>

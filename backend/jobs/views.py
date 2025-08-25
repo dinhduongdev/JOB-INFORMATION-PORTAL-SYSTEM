@@ -71,7 +71,7 @@ class JobPostViewSet(viewsets.ModelViewSet):
             return [IsEmployerOwner()]
         elif self.action in [ 'my_posts']:
             return [IsEmployer()]
-        return [AllowAny]
+        return [AllowAny()]
 
     def perform_create(self, serializer):
         serializer.save(employer=self.request.user.employer_profile)
