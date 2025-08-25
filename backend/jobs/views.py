@@ -66,12 +66,12 @@ class JobPostViewSet(viewsets.ModelViewSet):
             return queryset.filter(employer=user.employer_profile)
         return queryset
 
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsEmployerOwner()]
-        elif self.action in [ 'my_posts']:
-            return [IsEmployer()]
-        return [AllowAny()]
+    # def get_permissions(self):
+    #     if self.action in ['create', 'update', 'partial_update', 'destroy']:
+    #         return [IsEmployerOwner()]
+    #     elif self.action in [ 'my_posts']:
+    #         return [IsEmployer()]
+    #     return [AllowAny()]
 
     def perform_create(self, serializer):
         serializer.save(employer=self.request.user.employer_profile)
@@ -84,12 +84,12 @@ class JobPostViewSet(viewsets.ModelViewSet):
 
         self.check_object_permissions(request, instance)
 
-        if instance.is_active:
-            return api_response(
-                status=status.HTTP_400_BAD_REQUEST,
-                message="You must deactivate the job post before deleting it.",
-                data={'is_active': instance.is_active}
-            )
+        # if instance.is_active:
+        #     return api_response(
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #         message="You must deactivate the job post before deleting it.",
+        #         data={'is_active': instance.is_active}
+        #     )
 
         self.perform_destroy(instance)
         return api_response(

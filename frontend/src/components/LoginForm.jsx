@@ -115,7 +115,7 @@ const LoginForm = () => {
           className="btn btn-danger w-100 py-2 fw-bold mt-3"
           disabled={false} // Có thể dùng state.loading
         >
-          Đăng nhập bằng Email
+          Đăng nhập
         </button>
       </form>
       <p className="text-center mt-4">

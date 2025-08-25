@@ -4,9 +4,6 @@ import { fetchMyPostedJobsAPI, createJobAPI, updateJobAPI, deleteJobAPI } from "
 // Giả sử token được lưu trong localStorage
 const token = localStorage.getItem("token");
 
-// --- THUNKS ---
-
-// (ĐÃ CẬP NHẬT)
 export const fetchMyPostedJobsThunk = createAsyncThunk(
   "post/fetchMyPostedJobs",
   async (page = 1) => { // Nhận page, mặc định là 1

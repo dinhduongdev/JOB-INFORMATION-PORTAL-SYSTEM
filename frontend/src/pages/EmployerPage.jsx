@@ -1,13 +1,11 @@
 
-
-
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createJobThunk,
   fetchMyPostedJobsThunk,
-  // updateJobThunk,
-  // deleteJobThunk,
+  updateJobThunk,
+  deleteJobThunk,
 } from "../features/post/postSlice";
 import JobPostForm from "../components/JobPostForm";
 import Pagination from "../components/Pagination"; // Import component phân trang
@@ -37,12 +35,11 @@ const EmployerPage = () => {
 
   const handleFormSubmit = (data) => {
     if (editingJob) {
-      console.log("Updating job:", { id: editingJob.id, ...data });
-      // Giả sử bạn có update thunk: dispatch(updateJobThunk({ id: editingJob.id, ...data }));
+      dispatch(updateJobThunk({ id: editingJob.id, ...data }));
+      toast.success('Cập nhật bài đăng thành công!');
     } else {
       dispatch(createJobThunk(data));
-      toast.success('Tạo bài đăng thành công!')
-      
+      toast.success('Tạo bài đăng thành công!');
     }
     handleCloseModal();
     // Tải lại dữ liệu của trang hiện tại sau khi thực hiện hành động
@@ -51,8 +48,8 @@ const EmployerPage = () => {
 
   const handleDelete = (jobId) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa bài đăng này không?")) {
-      console.log("Deleting job:", jobId);
-      // Giả sử bạn có delete thunk: dispatch(deleteJobThunk(jobId));
+      dispatch(deleteJobThunk(jobId));
+      toast.success('Xóa bài đăng thành công!');
       setTimeout(() => dispatch(fetchMyPostedJobsThunk(currentPage)), 500);
     }
   };
