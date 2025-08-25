@@ -4,7 +4,7 @@ import { fetchJobs } from './jobActions';
 const jobSlice = createSlice({
   name: 'job',
   initialState: {
-    jobs: [],
+    jobs: { count: 0, results: [] },
     status: 'idle',
     error: null,
   },

@@ -3,19 +3,31 @@ import logo from "../assets/logo.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
+import { useEffect } from "react";
+import { fetchMe } from "../features/user/userAction"; // import action lấy me
+
 import "../css/Header.css";
 
-
-
 const Header = () => {
-  const { token, user } = useSelector((state) => state.auth);
+  const { token } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.user); // lấy user từ userSlice
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // gọi API lấy user info khi có token
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchMe(token));
+    }
+  }, [token, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
+
+  console.log("User in Header:", user);
+  
 
   return (
     <header className="py-2 bg-dark" data-bs-theme="dark">
@@ -51,9 +63,13 @@ const Header = () => {
         </ul>
 
         <div className="text-end d-flex align-items-center">
-          <a href="#" className="btn btn-outline-light me-3">
-            Nhà Tuyển Dụng
-          </a>
+          {
+            user?.data?.role === "Employer" && (
+              <Link to="/employer" className="btn btn-outline-light me-3">
+                Nhà tuyển dụng
+              </Link>
+            )
+          }
 
           {token ? (
             <div className="dropdown hover-dropdown">
@@ -64,7 +80,7 @@ const Header = () => {
                 aria-label="User menu"
               >
                 <span className="me-2 text-white">
-                  Xin chào, {user?.username || "Người dùng"}!
+                  Xin chào, {user?.data?.first_name + " " + user?.data?.last_name || "Người dùng"}!
                 </span>
                 <i className="bi bi-person-circle"></i>
               </button>

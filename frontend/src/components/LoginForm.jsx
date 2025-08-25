@@ -6,6 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loginUserAPI } from '../features/auth/authAPI';
 import { useDispatch } from 'react-redux';
 import { setCredentials, setError, setLoading } from '../features/auth/authSlice';
+import { toast } from 'react-toastify'; 
+
+
 
 const LoginForm = () => {
   const [username, setUsername] = useState('');
@@ -18,17 +21,16 @@ const LoginForm = () => {
     e.preventDefault();
     dispatch(setLoading(true));
     try {
-      console.log({ username, password }); // Log dữ liệu gửi đi
+      console.log({ username, password }); 
       const response = await loginUserAPI({ username, password });
-      console.log('Login response:', response); // Log response
       dispatch(setCredentials({
         user: { username },
         token: response.access_token,
         refreshToken: response.refresh_token,
       }));
+      toast.success('Đăng nhập thành công!'); ``
       navigate('/');
     } catch (error) {
-      console.error('Login error:', error); // Log lỗi
       dispatch(setError(error?.message || 'Đăng nhập thất bại'));
     } finally {
       dispatch(setLoading(false));

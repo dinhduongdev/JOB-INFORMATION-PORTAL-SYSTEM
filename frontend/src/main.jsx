@@ -4,6 +4,10 @@ import "./index.css";
 import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { store } from "./app/store"; 
+import { ToastContainer } from "react-toastify";   
+import "react-toastify/dist/ReactToastify.css";
+
+
 
 const apiUrl = import.meta.env.VITE_BACKEND_URL;
 const clientId = import.meta.env.VITE_CLIENT_ID;
@@ -21,6 +25,7 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
       <App />
+      <ToastContainer position="top-right" autoClose={3000} /> 
     </Provider>
   </StrictMode>
 );
