@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { authApis, endpoints } from '../../configs/apis'; // Adjust the import path as needed
+import { authApis, endpoints } from '../../configs/apis'; 
 
 export const fetchStoredCv = createAsyncThunk(
   'cv/fetchStoredCv',
@@ -9,7 +9,7 @@ export const fetchStoredCv = createAsyncThunk(
       if (!token) throw new Error('No authentication token found');
       const api = authApis(token);
       const response = await api.get(endpoints.storedCv(applicantId));
-      console.log('Fetch response:', response.data);
+      console.log('Fetch response:', response.data.results);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });

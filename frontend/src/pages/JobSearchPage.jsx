@@ -5,12 +5,14 @@ import '../css/JobSearchPage.css';
 import { BsSearch, BsGeoAlt, BsHeart, BsBookmarkFill } from 'react-icons/bs';
 import { fetchJobs } from '../features/job/jobActions';
 import Pagination from '../components/Pagination'; // Import component Pagination
+import ApplicationModal from '../components/ApplicationModal';
 
 const JobSearchPage = () => {
   const dispatch = useDispatch();
   const { jobs, status } = useSelector((state) => state.job || { jobs: { count: 0, results: [] }, status: 'idle' });
   const [selectedJob, setSelectedJob] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
 
   // Lấy các tham số từ URL
   const currentPage = parseInt(searchParams.get('page') || '1');
@@ -31,13 +33,13 @@ const JobSearchPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      dispatch(fetchJobs({ 
-        token, 
-        page: currentPage, 
-        search: searchTerm, 
-        salaryMin: salaryMin ? parseInt(salaryMin) : null, 
-        salaryMax: salaryMax ? parseInt(salaryMax) : null, 
-        currency 
+      dispatch(fetchJobs({
+        token,
+        page: currentPage,
+        search: searchTerm,
+        salaryMin: salaryMin ? parseInt(salaryMin) : null,
+        salaryMax: salaryMax ? parseInt(salaryMax) : null,
+        currency
       }));
     }
   }, [dispatch, searchTerm, salaryMin, salaryMax, currency, currentPage]);
@@ -70,10 +72,10 @@ const JobSearchPage = () => {
   // Xử lý khi người dùng chuyển trang
   const handlePageChange = (newPage) => {
     if (newPage > 0) {
-        const params = new URLSearchParams(searchParams);
-        params.set('page', newPage);
-        setSearchParams(params);
-        window.scrollTo(0, 0); // Cuộn lên đầu trang
+      const params = new URLSearchParams(searchParams);
+      params.set('page', newPage);
+      setSearchParams(params);
+      window.scrollTo(0, 0); // Cuộn lên đầu trang
     }
   };
 
@@ -89,6 +91,15 @@ const JobSearchPage = () => {
   // Tính toán tổng số trang
   const itemsPerPage = 2; // Giả sử API trả về 2 item mỗi trang
   const totalPages = Math.ceil((jobs?.count || 0) / itemsPerPage);
+
+  const handleApply = () => {
+    if (!selectedJob) return;
+    setShowApplicationModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowApplicationModal(false);
+  };
 
   return (
     <div className="job-search-page">
@@ -196,13 +207,13 @@ const JobSearchPage = () => {
             </div>
 
             <div className="mt-4">
-              <Pagination 
+              <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
               />
             </div>
-            
+
           </div>
           <div className="col-lg-7">
             {selectedJob && (
@@ -219,7 +230,7 @@ const JobSearchPage = () => {
                   />
                 </div>
                 <div className="d-flex gap-3 my-3">
-                  <button className="btn btn-red flex-grow-1">Ứng tuyển</button>
+                  <button className="btn btn-red flex-grow-1" onClick={handleApply}>Ứng tuyển</button>
                   <button className="btn btn-outline-secondary">
                     <BsHeart />
                   </button>
@@ -244,6 +255,11 @@ const JobSearchPage = () => {
           </div>
         </div>
       </main>
+      <ApplicationModal
+        show={showApplicationModal}
+        onHide={handleCloseModal}
+        job={selectedJob}
+      />
     </div>
   );
 };
