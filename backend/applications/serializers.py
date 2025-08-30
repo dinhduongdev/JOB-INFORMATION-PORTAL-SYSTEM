@@ -14,7 +14,8 @@ class CurrentApplicantProfile:
     requires_context = True
 
     def __call__(self, serializer_field):
-        return serializer_field.context["request"].user.applicant_profile.id
+        # return serializer_field.context["request"].user.applicant_profile.id
+        return serializer_field.context["request"].user.applicant_profile
 
     def __repr__(self):
         return "%s()" % self.__class__.__name__
