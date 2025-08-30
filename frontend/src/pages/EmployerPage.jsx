@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createJobThunk,
@@ -17,6 +18,7 @@ import { toast } from 'react-toastify';
 
 const EmployerPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { myJobs, loading, error } = useSelector((state) => state.post);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -97,6 +99,13 @@ const EmployerPage = () => {
                 <div className="job-card__actions">
                   <button onClick={() => handleOpenEditModal(job)} className="action-btn">✏️</button>
                   <button onClick={() => handleDelete(job.id)} className="action-btn action-btn--delete">🗑️</button>
+                  <button
+                    onClick={() => navigate(`/job/${job.id}/applicants`)}
+                    className="action-btn action-btn--view"
+                    style={{ marginLeft: 8 }}
+                  >
+                    👥 Xem ứng viên
+                  </button>
                 </div>
               </div>
 
