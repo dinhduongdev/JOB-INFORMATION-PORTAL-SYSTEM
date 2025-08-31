@@ -7,10 +7,12 @@ import RegisterPage from "./pages/RegisterPage";
 import "./App.css";
 import CVPage from "./pages/CVPage";
 import CreateCVPage from "./pages/CreateCVPage";
+import AppliedJobsPage from "./pages/AppliedJobsPage";
 import CVTemplatesPage from "./pages/CVTemplatesPage";
 import JobSearchPage from "./pages/JobSearchPage";
 import StoredCv from "./pages/StoredCv";
 import EmployerPage from "./pages/EmployerPage";
+import ApplicantsPage from "./pages/ApplicantsPage";
 
 function App() {
   return (
@@ -44,10 +46,12 @@ function App() {
           <Route index element={<CreateCVPage />} />
           <Route path="cv-templates" element={<CVTemplatesPage />} />
           <Route path="stored" element={<StoredCv />} />
+          <Route path="applied-jobs" element={<AppliedJobsPage />} />
         </Route>
 
         <Route path="/job-search" element={<JobSearchPage />} />
         <Route path="/employer" element={<EmployerPage />} />
+        <Route path="/job/:jobId/applicants" element={<ApplicantsPage />} />
       </Routes>
 
       <Footer />

@@ -14,7 +14,7 @@ export const createJobAPI = async (token, jobData) => {
 
 // update job
 export const updateJobAPI = async (token, id, jobData) => {
-  const res = await authApis(token).put(`/api/v1/job-posts/${id}/`, jobData);
+  const res = await authApis(token).patch(`/api/v1/job-posts/${id}/`, jobData);
   return res.data;
 };
 

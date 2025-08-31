@@ -422,7 +422,9 @@ const CreateCVPage = () => {
                   <li className="nav-item"><a className="nav-link" href="#"><FiGrid /> Tổng quan</a></li>
                   <Link to="/profile-cv/stored" className="nav-item"><a className="nav-link" href="#"><FiFileText /> Hồ sơ của tôi</a></Link>
                   <li className="nav-item"><a className="nav-link active" href="#"><FiStar /> Hồ sơ ITviec</a></li>
-                  <li className="nav-item"><a className="nav-link" href="#"><BsBriefcase /> Việc làm của tôi</a></li>
+                  <Link to="/profile-cv/applied-jobs" className="nav-item">
+                    <a className="nav-link" href="#"><BsBriefcase /> Việc làm của tôi</a>
+                  </Link>
                   <li className="nav-item"><a className="nav-link" href="#"><BsEnvelope /> Lời mời công việc</a></li>
                   <li className="nav-item"><a className="nav-link" href="#"><BsEnvelope /> Đăng ký nhận email</a></li>
                   <li className="nav-item"><a className="nav-link" href="#"><BsBell /> Thông báo</a></li>

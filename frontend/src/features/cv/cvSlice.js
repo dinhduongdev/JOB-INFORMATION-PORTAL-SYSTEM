@@ -22,6 +22,9 @@ const cvSlice = createSlice({
       .addCase(fetchStoredCv.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.cv = action.payload;
+        console.log('====================================');
+        console.log("state.cv", state.cv);
+        console.log('====================================');
       })
       .addCase(fetchStoredCv.rejected, (state, action) => {
         state.status = 'failed';

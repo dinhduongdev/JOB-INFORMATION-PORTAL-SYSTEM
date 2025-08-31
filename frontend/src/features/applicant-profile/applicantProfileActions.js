@@ -7,6 +7,7 @@ export const fetchApplicantProfile = createAsyncThunk(
     try {
       const api = authApis(token);
       const response = await api.get(endpoints.myApplicantProfile);
+      console.log("response applicantprofile: ", response)
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);

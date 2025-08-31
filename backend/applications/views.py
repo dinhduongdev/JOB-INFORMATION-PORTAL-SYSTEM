@@ -74,7 +74,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         )
 
         user = self.request.user
-        if user.is_staff or user.is_superuser or user.is_admin:
+        if user.is_staff or user.is_superuser or getattr(user, "role", None) == "ADMIN":
             return base
 
         if user.is_applicant:
@@ -88,6 +88,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
             return ApplicationReadSerializer
+        elif self.action in ["my_applications"]:
+            return ApplicationReadSerializer
         return ApplicationWriteSerializer
 
     def get_permissions(self):
@@ -99,8 +101,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "update": [IsApplicant],
             "partial_update": [IsApplicant],
             "destroy": [IsApplicant],
+            "my_applications": [IsApplicant]
         }
 
-        # Default to owner permissions
         permission_classes = BASE_PERMISSIONS + PERMISSION_MAP.get(self.action)
         return [permission() for permission in permission_classes]
+
+    @action(detail=False, methods=["get"], url_path="my-applications")
+    def my_applications(self, request):
+        user = request.user
+
+        applications = self.get_queryset().filter(
+            applicant=user.applicant_profile
+        ).select_related("job_post")
+
+        serializer = self.get_serializer(applications, many=True)
+        return Response(serializer.data)
