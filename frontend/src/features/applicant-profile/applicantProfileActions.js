@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { endpoints, authApis } from "../../configs/Apis";
+import { endpoints, authApis } from "../../configs/apis";
 
 export const fetchApplicantProfile = createAsyncThunk(
   'applicantProfile/fetchApplicantProfile',
@@ -7,6 +7,7 @@ export const fetchApplicantProfile = createAsyncThunk(
     try {
       const api = authApis(token);
       const response = await api.get(endpoints.myApplicantProfile);
+      console.log("response applicantprofile: ", response)
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);

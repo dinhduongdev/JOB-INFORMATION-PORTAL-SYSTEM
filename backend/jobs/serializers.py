@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from user.models import Title, Skill
+from user.models import Title, Skill, ApplicantProfile
 from user.serializers import TitleSerializer, SkillSerializer, EmployerProfileSerializer
 from .models import JobPost, Expertise, Salary
 from rest_framework import serializers
@@ -129,6 +129,7 @@ class JobPostReadSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True)
     employer = EmployerProfileSerializer()
     salary = SalarySerializer()
+    application_count = serializers.SerializerMethodField()
 
     class Meta:
         model = JobPost
@@ -146,5 +147,46 @@ class JobPostReadSerializer(serializers.ModelSerializer):
             'created_at',
             'due_date',
             'is_active',
+            "application_count",
         ]
         read_only_fields = fields
+
+    def get_application_count(self, obj):
+        return obj.applications.count()
+
+
+class ApplicantProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email')
+    full_name = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+    cv = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ApplicantProfile
+        fields = [
+            "id",
+            "full_name",
+            "email",
+            "avatar_url",
+            "phone_number",
+            "description",
+            "birth_date",
+            "address",
+            "cv",
+        ]
+
+    def get_full_name(self, obj):
+        return obj.user.get_full_name()
+
+    def get_avatar_url(self, obj):
+        return obj.user.avatar_url if obj.user.avatar else None
+
+    def get_cv(self, obj):
+        application = self.context.get('application')
+        if application and application.cv:
+            return {
+                "id": application.cv.id,
+                "file_url": application.cv.file.url if hasattr(application.cv, 'file') else None,
+                # Thêm các trường khác của CV nếu cần
+            }
+        return None

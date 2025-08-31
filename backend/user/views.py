@@ -82,6 +82,44 @@ class UserViewSet(viewsets.ViewSet):
         if self.action in ["update_my_profile"]:
             return [IsAuthenticated()]
         return [IsAuthenticated()]
+    
+    @action(detail=False, methods=["get"], url_path="me")
+    def get_my_profile(self, request: HttpRequest):
+        """
+        Get authenticated user's profile
+
+        Responses:
+        ----------
+        200 OK:
+        {
+            "id": "integer",
+            "email": "string",
+            "first_name": "string",
+            "last_name": "string",
+            "avatar": "string",
+            "role": "string",
+            "is_active": "boolean"
+        }
+
+        401 Unauthorized:
+        {
+            "detail": "Authentication credentials were not provided."
+        }
+        """
+        user = request.user
+        serializer = self.serializer_class(user, context={"request": request})
+
+        response_data = {
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "avatar": user.avatar,
+            "role": user.role,
+            "is_active": user.is_active
+        }
+
+        return api_response(data=response_data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["put", "patch"], url_path="me")
     def update_my_profile(self, request: HttpRequest):

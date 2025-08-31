@@ -6,6 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loginUserAPI } from '../features/auth/authAPI';
 import { useDispatch } from 'react-redux';
 import { setCredentials, setError, setLoading } from '../features/auth/authSlice';
+import { toast } from 'react-toastify';
+
+
 
 const LoginForm = () => {
   const [username, setUsername] = useState('');
@@ -18,17 +21,17 @@ const LoginForm = () => {
     e.preventDefault();
     dispatch(setLoading(true));
     try {
-      console.log({ username, password }); // Log dữ liệu gửi đi
+      console.log({ username, password });
       const response = await loginUserAPI({ username, password });
-      console.log('Login response:', response); // Log response
+      console.log("response: ", response)
       dispatch(setCredentials({
         user: { username },
         token: response.access_token,
         refreshToken: response.refresh_token,
       }));
+      toast.success('Đăng nhập thành công!'); ``
       navigate('/');
     } catch (error) {
-      console.error('Login error:', error); // Log lỗi
       dispatch(setError(error?.message || 'Đăng nhập thất bại'));
     } finally {
       dispatch(setLoading(false));
@@ -100,7 +103,7 @@ const LoginForm = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <span 
+            <span
               className="input-group-text bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
@@ -113,7 +116,7 @@ const LoginForm = () => {
           className="btn btn-danger w-100 py-2 fw-bold mt-3"
           disabled={false} // Có thể dùng state.loading
         >
-          Đăng nhập bằng Email
+          Đăng nhập
         </button>
       </form>
       <p className="text-center mt-4">

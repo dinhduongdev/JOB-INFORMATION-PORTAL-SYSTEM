@@ -13,6 +13,8 @@ import json
 from os import getenv
 from pathlib import Path
 
+from django.conf.global_settings import CSRF_TRUSTED_ORIGINS
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -57,7 +59,9 @@ INSTALLED_APPS = [
     "config"
 ]
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "https://job-information-portal-system-5e55.onrender.com"]
+
+CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app", "http://localhost:6789", "https://job-information-portal-system-5e55.onrender.com"]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
