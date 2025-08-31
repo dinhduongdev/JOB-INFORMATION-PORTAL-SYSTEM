@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import "../css/StoredCv.css"; // Tệp CSS cho component này
+import "../css/StoredCv.css";
 import {
   BsCloudUpload,
   BsFileEarmarkPdf,
@@ -12,8 +12,11 @@ import {
   fetchStoredCv,
   uploadCvFile,
   deleteStoredCv,
-} from "../features/cv/cvAction"; // Adjust the path
+} from "../features/cv/cvAction";
 import { fetchApplicantProfile } from "../features/applicant-profile/applicantProfileActions";
+import { toast } from 'react-toastify';
+
+
 
 const StoredCv = () => {
   const token = localStorage.getItem("token");
@@ -21,9 +24,7 @@ const StoredCv = () => {
   const { cv, status, error } = useSelector((state) => state.cv);
   const { profile } = useSelector((state) => state.applicantProfile);
   const fileInputRef = useRef(null);
-   // Replace with dynamic applicant ID (e.g., from auth context)
 
-  // State to manage the selected file for upload
   const [selectedFile, setSelectedFile] = useState(null);
   console.log("vc", cv);
 
@@ -32,19 +33,18 @@ const StoredCv = () => {
       dispatch(fetchApplicantProfile(token));
     }
   }, [dispatch, token]);
-  console.log("token", token);
-  const applicantId =1 ;
+  const applicantId = profile?.data?.id || null;
 
-  console.log('====================================');
+  console.log("====================================");
   console.log("profile", profile);
-  console.log('====================================');
+  console.log("====================================");
 
-  // Fetch CVs when component mounts
   useEffect(() => {
-    dispatch(fetchStoredCv(applicantId));
+    if (applicantId) {
+      dispatch(fetchStoredCv(applicantId));
+    }
   }, [dispatch, applicantId]);
 
-  // Handle file input change
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -52,27 +52,27 @@ const StoredCv = () => {
     }
   };
 
-  // Handle file upload
   const handleUpload = () => {
     if (selectedFile && applicantId) {
       dispatch(uploadCvFile({ applicantId, file: selectedFile }))
         .then(() => {
-          dispatch(fetchStoredCv(applicantId)); // Refresh CV list after upload
-          setSelectedFile(null); // Clear the file input
-          fileInputRef.current.value = null; // Reset file input
+          dispatch(fetchStoredCv(applicantId));
+          setSelectedFile(null);
+          fileInputRef.current.value = null;
+                    toast.success('Upload thành công!'); 
         })
         .catch((error) => {
-          console.error("Upload failed:", error);
+          toast.error(error?.message || "Upload thất bại!");
         });
     }
   };
 
-  // Handle delete CV
   const handleDelete = (cvId) => {
+    console.log("Deleting CV", cvId, "for applicant", applicantId);
     if (applicantId) {
-      dispatch(deleteStoredCv(applicantId)) // Assuming delete uses applicantId to identify the CV
+      dispatch(deleteStoredCv(applicantId))
         .then(() => {
-          dispatch(fetchStoredCv(applicantId)); // Refresh CV list after deletion
+          dispatch(fetchStoredCv(applicantId));
         })
         .catch((error) => {
           console.error("Delete failed:", error);
@@ -80,10 +80,7 @@ const StoredCv = () => {
     }
   };
 
-  // Handle setting default CV (placeholder logic - adjust based on API)
   const setDefault = (cvId) => {
-    // Note: This assumes the API handles default CV setting via update or a separate endpoint
-    // For now, we'll simulate by updating local state; replace with actual API call
     console.log(`Setting CV ${cvId} as default`);
     // dispatch(updateStoredCv({ applicantId, cvData: { isDefault: true, id: cvId } })); // Uncomment and adjust if API supports this
   };
@@ -109,6 +106,30 @@ const StoredCv = () => {
             accept=".pdf,.doc,.docx"
           />
         </div>
+
+        {/* Show selected file info so user can confirm before uploading */}
+        {selectedFile && (
+          <div className="selected-file mt-3 d-flex align-items-center">
+            <BsFileEarmarkPdf size={22} className="me-2 text-secondary" />
+            <div>
+              <div className="fw-semibold">{selectedFile.name}</div>
+              <div className="text-muted small">
+                {(selectedFile.size / 1024).toFixed(1)} KB
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-sm btn-link ms-auto"
+              onClick={() => {
+                setSelectedFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = null;
+              }}
+            >
+              Bỏ chọn
+            </button>
+          </div>
+        )}
+
         <button
           className="btn btn-primary mt-3"
           onClick={handleUpload}
