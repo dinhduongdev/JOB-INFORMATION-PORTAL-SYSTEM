@@ -10,10 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import json
+import sys
 from os import getenv
 from pathlib import Path
-import sys
 
 from django.conf.global_settings import CSRF_TRUSTED_ORIGINS
 
@@ -64,12 +63,14 @@ INSTALLED_APPS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://job-information-portal-system-5e55.onrender.com",
+    "https://job-information-portal-system-yebg.onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.ngrok-free.app",
     "http://localhost:6789",
     "https://job-information-portal-system-5e55.onrender.com",
+    "https://job-information-portal-system-yebg.onrender.com",
 ]
 
 MIDDLEWARE = [
