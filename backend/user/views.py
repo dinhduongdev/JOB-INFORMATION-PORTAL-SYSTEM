@@ -39,7 +39,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        self.send_activation_email(serializer.instance, request)
+        # self.send_activation_email(serializer.instance, request)
 
         return api_response(
             data=None,

@@ -42,7 +42,7 @@ class User(AbstractUser):
     email = models.EmailField(_("email address"), unique=True)
     # avatar field is key of a s3 object
     avatar = models.CharField(max_length=255, blank=False, null=True)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     role = models.CharField(
         max_length=10,
         choices=Role.choices,
