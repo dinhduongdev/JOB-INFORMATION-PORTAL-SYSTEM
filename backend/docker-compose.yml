@@ -13,10 +13,10 @@ x-backend-service: &backend-service
   networks:
     - jobsite
   build:
-    context: ./backend
+    context: .
     dockerfile: Dockerfile
   volumes:
-    - ./backend:/app
+    - ./:/app
     - /app/.venv/
 
 services:
@@ -45,7 +45,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RBMQ_PASSWORD}
     ports:
       - "15672:15672"
-      # - "{RBMQ_PORT}:${RBMQ_PORT}"
+      - "${RBMQ_PORT}:${RBMQ_PORT}"
     networks:
       - jobsite
     volumes:
@@ -58,6 +58,9 @@ services:
 
   jobsite-backend:
     <<: *backend-service
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: ["python", "manage.py", "runserver", "0.0.0.0:${BACKEND_PORT}"]
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
@@ -73,7 +76,12 @@ services:
       - sh
       - -c
       - |
-        python manage.py makemigrations
+        python manage.py makemigrations user
+        python manage.py makemigrations jobs
+        python manage.py makemigrations applications
+        python manage.py migrate user
+        python manage.py migrate jobs
+        python manage.py migrate applications
         python manage.py migrate auth
         python manage.py migrate --run-syncdb
     depends_on:

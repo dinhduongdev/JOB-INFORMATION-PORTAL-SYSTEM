@@ -1,0 +1,164 @@
+.job-search-page {
+  background-color: #f8f9fa;
+}
+
+.search-hero {
+  background: linear-gradient(to right, #8a2387, #e94057, #f27121);
+  padding: 2rem 0;
+  color: white;
+}
+
+.search-box {
+  background-color: white;
+  color: #333;
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+.search-input-group:not(:last-child) {
+  border-right: 1px solid #dee2e6;
+}
+.search-input-group .form-control-plaintext {
+  border: none;
+  background: none;
+  width: 100%;
+}
+.btn-search {
+  padding: 0.75rem 1.5rem;
+}
+
+.featured-company-card {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.featured-company-card img {
+  height: 50px;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0;
+}
+.filters .btn-filter {
+  background: none;
+  border: none;
+  color: #6c757d;
+}
+
+.job-list {
+  max-height: 800px;
+  overflow-y: auto;
+}
+.job-card {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  position: relative;
+}
+.job-card.active {
+  border-left-color: #dc3545;
+  border-color: #dc3545;
+}
+.hot-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #dc3545;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.company-logo-small {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  margin-right: 1rem;
+}
+.job-title-small {
+  font-weight: bold;
+  color: #212529;
+}
+.company-name-small {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+.badge-love {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin: 0.5rem 0;
+}
+.salary-small {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+.skills-small .skill-tag {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.job-detail-card {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 2rem;
+  position: sticky;
+  top: 20px;
+}
+.company-logo-large {
+  height: 60px;
+}
+.skills-large .skill-tag {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Nút màu đỏ chung */
+.btn-red {
+    background-color: #dc3545;
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+.btn-red:hover {
+    background-color: #c82333;
+}

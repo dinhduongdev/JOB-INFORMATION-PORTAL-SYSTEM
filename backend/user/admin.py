@@ -1,8 +1,9 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserChangeForm, UserCreationForm
+from .models import ApplicantProfile, EmployerProfile, Skill, Title, WorkExperience
 
 User = get_user_model()
 
@@ -43,7 +44,7 @@ class UserAdmin(BaseUserAdmin):
         "is_staff",
         "is_superuser",
         "is_employer",
-        "is_employee",
+        "is_applicant",
         "is_active",
     )
     list_filter = ("is_staff", "is_superuser", "is_active", "groups")
@@ -51,3 +52,8 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(User, UserAdmin)
+admin.site.register(EmployerProfile)
+admin.site.register(ApplicantProfile)
+admin.site.register(WorkExperience)
+admin.site.register(Skill)
+admin.site.register(Title)

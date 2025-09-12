@@ -1,34 +1,59 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage'; 
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import "./App.css";
+import CVPage from "./pages/CVPage";
+import CreateCVPage from "./pages/CreateCVPage";
+import AppliedJobsPage from "./pages/AppliedJobsPage";
+import CVTemplatesPage from "./pages/CVTemplatesPage";
+import JobSearchPage from "./pages/JobSearchPage";
+import StoredCv from "./pages/StoredCv";
+import EmployerPage from "./pages/EmployerPage";
+import ApplicantsPage from "./pages/ApplicantsPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Header />
-      
+
       {/* Routes sẽ render các page component */}
       <Routes>
         {/* Route cho trang chủ */}
         <Route path="/" element={<HomePage />} />
 
         {/* Các routes cho đăng nhập và đăng ký được gói trong layout riêng */}
-        <Route path="/dang-nhap" element={
-          <LayoutAuth>
-            <LoginPage />
-          </LayoutAuth>
-        } />
-        <Route path="/dang-ky" element={
-          <LayoutAuth>
-            <RegisterPage />
-          </LayoutAuth>
-        } />
+        <Route
+          path="/login"
+          element={
+            <LayoutAuth>
+              <LoginPage />
+            </LayoutAuth>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <LayoutAuth>
+              <RegisterPage />
+            </LayoutAuth>
+          }
+        />
+        <Route path="/cv" element={<CVPage />} />
+        <Route path="/profile-cv">
+          <Route index element={<CreateCVPage />} />
+          <Route path="cv-templates" element={<CVTemplatesPage />} />
+          <Route path="stored" element={<StoredCv />} />
+          <Route path="applied-jobs" element={<AppliedJobsPage />} />
+        </Route>
+
+        <Route path="/job-search" element={<JobSearchPage />} />
+        <Route path="/employer" element={<EmployerPage />} />
+        <Route path="/job/:jobId/applicants" element={<ApplicantsPage />} />
       </Routes>
-      
+
       <Footer />
     </BrowserRouter>
   );
@@ -39,9 +64,7 @@ const LayoutAuth = ({ children }) => {
     <div className="container">
       <main className="my-5">
         <div className="row justify-content-center">
-          <div className="col-lg-10 col-xl-9">
-            {children}
-          </div>
+          <div className="col-lg-10 col-xl-9">{children}</div>
         </div>
       </main>
     </div>

@@ -1,12 +1,13 @@
 from functools import lru_cache
 from random import choice
-from settings import ALLOWED_AVATAR_EXTENSIONS, AVATAR_MAX_SIZE
 
+from . import s3_client
 from .settings import (
-    s3_client,
-    PUBLIC_BUCKET_NAME,
-    AVATARS_PATH,
+    ALLOWED_AVATAR_EXTENSIONS,
+    AVATAR_MAX_SIZE,
     AVATARS_DEFAULT_AVATARS_PATH,
+    AVATARS_PATH,
+    BUCKET_NAME,
 )
 
 
@@ -17,7 +18,7 @@ def _get_default_avatars_keys():
     :return: List of keys for default avatars
     """
     default_avatars_objs = s3_client.list_objects_v2(
-        Bucket=PUBLIC_BUCKET_NAME,
+        Bucket=BUCKET_NAME,
         Prefix=AVATARS_DEFAULT_AVATARS_PATH,
     )["Contents"]
     # Extract the keys from the objects
@@ -30,6 +31,18 @@ def is_default_avatar_key(key: str) -> bool:
 
 def get_random_default_avatar_key() -> str:
     return choice(_get_default_avatars_keys())
+
+
+def list_user_avatar_keys(user_id) -> list:
+    """List all avatar keys for a user in the S3 bucket"""
+
+    # List objects in the S3 bucket with the specified prefix
+    user_avatars_objs = s3_client.list_objects_v2(
+        Bucket=BUCKET_NAME,
+        Prefix=f"{AVATARS_PATH}{user_id}.",
+    ).get("Contents", [])
+    # Extract the keys from the objects
+    return [obj["Key"] for obj in user_avatars_objs]
 
 
 def generate_avatar_upload_url(user_id, file_extension) -> dict:
@@ -67,10 +80,9 @@ def generate_avatar_upload_url(user_id, file_extension) -> dict:
 
     # Generate presigned post data
     return s3_client.generate_presigned_post(
-        Bucket=PUBLIC_BUCKET_NAME,
+        Bucket=BUCKET_NAME,
         Key=key,
         Fields={},
         Conditions=conditions,
         ExpiresIn=300,  # URL valid for 5 minutes
     )
-
