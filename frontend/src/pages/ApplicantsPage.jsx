@@ -9,9 +9,16 @@ const ApplicantsPage = () => {
   const [applicants, setApplicants] = useState([]);
 
   useEffect(() => {
+    console.log('====================================');
+    console.log("env", import.meta.env.VITE_BACKEND_URL);
+    console.log('====================================');
+  }, []);
+
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return setError("Bạn chưa đăng nhập");
     setLoading(true);
+    
     fetch(
       `${
         import.meta.env.VITE_BACKEND_URL
