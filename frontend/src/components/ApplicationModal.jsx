@@ -58,7 +58,7 @@ const ApplicationModal = ({ show, onHide, job }) => {
       console.log("job_post", job.id);
       console.log("====================================");
 
-      const response = await fetch(`http://localhost:6789/api/v1/applications/`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/applications/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
