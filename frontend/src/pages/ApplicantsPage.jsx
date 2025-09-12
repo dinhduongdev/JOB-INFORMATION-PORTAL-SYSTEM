@@ -12,11 +12,16 @@ const ApplicantsPage = () => {
     const token = localStorage.getItem("token");
     if (!token) return setError("Bạn chưa đăng nhập");
     setLoading(true);
-    fetch(`http://localhost:6789/api/v1/jobposts/${jobId}/applicants/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    fetch(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/v1/jobposts/${jobId}/applicants/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
       .then((res) => {
         if (!res.ok) throw new Error("Không thể lấy danh sách ứng viên");
         return res.json();
@@ -72,8 +77,14 @@ const ApplicantsPage = () => {
                   <td>{app.email}</td>
                   <td>
                     {app.avatar_url ? (
-                      <img src={app.avatar_url} alt="avatar" style={{ width: 40, height: 40, borderRadius: "50%" }} />
-                    ) : "Không có"}
+                      <img
+                        src={app.avatar_url}
+                        alt="avatar"
+                        style={{ width: 40, height: 40, borderRadius: "50%" }}
+                      />
+                    ) : (
+                      "Không có"
+                    )}
                   </td>
                   <td>{app.phone_number}</td>
                   <td>{app.birth_date}</td>
@@ -88,7 +99,9 @@ const ApplicantsPage = () => {
                       >
                         Xem CV
                       </Button>
-                    ) : "Không có CV"}
+                    ) : (
+                      "Không có CV"
+                    )}
                   </td>
                 </tr>
               ))

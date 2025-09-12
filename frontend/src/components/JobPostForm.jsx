@@ -22,7 +22,9 @@ const JobPostForm = ({ jobToEdit, onSubmit, onCancel }) => {
   useEffect(() => {
     const fetchTitles = async () => {
       try {
-        const response = await fetch("http://localhost:6789/api/v1/titles/");
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/titles/`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch titles");
         }
@@ -38,7 +40,9 @@ const JobPostForm = ({ jobToEdit, onSubmit, onCancel }) => {
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const response = await fetch("http://localhost:6789/api/v1/skills/");
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/skills/`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch skills");
         }
@@ -60,8 +64,11 @@ const JobPostForm = ({ jobToEdit, onSubmit, onCancel }) => {
         due_date: jobToEdit.due_date
           ? new Date(jobToEdit.due_date).toISOString().split("T")[0]
           : "",
-        salary:
-          jobToEdit.salary || { amount: "", currency: "VND", display_text: "" }, // Đảm bảo salary không bị null
+        salary: jobToEdit.salary || {
+          amount: "",
+          currency: "VND",
+          display_text: "",
+        }, // Đảm bảo salary không bị null
       });
     } else {
       setFormData(initialState);
@@ -199,7 +206,8 @@ const JobPostForm = ({ jobToEdit, onSubmit, onCancel }) => {
             >
               {skills.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} {/* Giả sử trường hiển thị là 'name'. Nếu khác, thay bằng s.skill hoặc tương tự */}
+                  {s.name}{" "}
+                  {/* Giả sử trường hiển thị là 'name'. Nếu khác, thay bằng s.skill hoặc tương tự */}
                 </option>
               ))}
             </select>
@@ -214,7 +222,8 @@ const JobPostForm = ({ jobToEdit, onSubmit, onCancel }) => {
             >
               {titles.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name} {/* Giả sử trường hiển thị là 'name'. Nếu khác, thay bằng t.title hoặc tương tự */}
+                  {t.name}{" "}
+                  {/* Giả sử trường hiển thị là 'name'. Nếu khác, thay bằng t.title hoặc tương tự */}
                 </option>
               ))}
             </select>
